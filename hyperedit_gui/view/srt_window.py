@@ -42,7 +42,7 @@ class SrtEntry:
     def to_primitive(self):
         return (self.id, self.start_time, self.end_time)
 
-class SrtWindow(QMainWindow):
+class SrtWindow(QWidget):
 
     def __init__(self, srtEntry: SrtEntry):
         super().__init__()
@@ -51,9 +51,7 @@ class SrtWindow(QMainWindow):
 
         self.resize(600, 400)
 
-        self.centralWidget = QWidget(self)
-        self.setCentralWidget(self.centralWidget)
-        self.layout = QVBoxLayout(self.centralWidget)
+        self.layout = QVBoxLayout(self)
 
         self.model = QStandardItemModel(0, 4)  # 4 columns
         self.model.setHeaderData(0, Qt.Horizontal, "ID")

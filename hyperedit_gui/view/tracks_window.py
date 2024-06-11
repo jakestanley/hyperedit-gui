@@ -22,7 +22,7 @@ class TrackWidget(QWidget):
         hLayout.addWidget(previewButton, alignment=Qt.AlignRight)
         self.setLayout(hLayout)
 
-class TracksWindow(QMainWindow):
+class TracksWindow(QWidget):
     def __init__(self, tracks=[]):
         super().__init__()
 
@@ -31,9 +31,7 @@ class TracksWindow(QMainWindow):
         # Set the main window's size
         self.resize(600, 480)
 
-        self.central_widget = QWidget(self)
-        self.setCentralWidget(self.central_widget)
-        self.layout = QVBoxLayout(self.central_widget)
+        self.layout = QVBoxLayout(self)
 
         self.layout.addWidget(self.create_tracks_groupbox())
 

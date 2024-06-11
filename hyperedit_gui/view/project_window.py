@@ -43,7 +43,7 @@ class ProjectWidget(QWidget):
         hLayout.addWidget(removeButton)
         self.setLayout(hLayout)
 
-class ProjectWindow(QMainWindow):
+class ProjectWindow(QWidget):
     def __init__(self, projects=[]):
         super().__init__()
 
@@ -52,9 +52,7 @@ class ProjectWindow(QMainWindow):
         # Set the main window's size
         self.resize(600, 400)
 
-        self.central_widget = QWidget(self)
-        self.setCentralWidget(self.central_widget)
-        self.layout = QVBoxLayout(self.central_widget)
+        self.layout = QVBoxLayout(self)
         self.layout.addWidget(QPushButton("New project"))
         self.layout.addWidget(QPushButton("Load project"))
         
