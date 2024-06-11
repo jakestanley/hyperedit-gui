@@ -1,5 +1,5 @@
 import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QLabel, QWidget, QHBoxLayout, QCheckBox, QVBoxLayout, QListWidget, QListWidgetItem, QGroupBox
+from PySide6.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QLabel, QWidget, QHBoxLayout, QCheckBox, QVBoxLayout, QListWidget, QListWidgetItem, QGroupBox, QPushButton
 from PySide6.QtGui import QAction
 from PySide6.QtCore import QCoreApplication, Qt
 
@@ -16,7 +16,10 @@ class TrackWidget(QWidget):
         hLayout.addWidget(QLabel(f"Track {self.index}"))
         self.checkbox = QCheckBox()
         self.checkbox.setChecked(self.enabled)
+        hLayout.addStretch()
         hLayout.addWidget(self.checkbox, alignment=Qt.AlignRight)
+        previewButton = QPushButton("Preview")
+        hLayout.addWidget(previewButton, alignment=Qt.AlignRight)
         # hLayout.addWidget(self.checkbox)
         self.setLayout(hLayout)
 
@@ -43,6 +46,10 @@ class MainWindow(QMainWindow):
         
         self.listWidget = QListWidget()
         vlayout.addWidget(self.listWidget)
+
+        # TODO add track buttons, etc, need to save as
+        #  file with track ids selected
+
         groupbox.setLayout(vlayout)
         return groupbox
 
