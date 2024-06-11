@@ -44,10 +44,10 @@ class SrtEntry:
 
 class SrtWindow(QWidget):
 
-    def __init__(self, srtEntry: SrtEntry):
-        super().__init__()
+    def __init__(self, parent, srts):
+        super().__init__(parent)
 
-        self.srt = srt
+        self.srt = srts
 
         self.resize(600, 400)
 
@@ -85,7 +85,7 @@ class SrtWindow(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    srt = parse_srt("data/test.srt")
-    window = SrtWindow(srt)
+    srts = parse_srt("data/test.srt")
+    window = SrtWindow(srts)
     window.show()
     sys.exit(app.exec())

@@ -23,8 +23,8 @@ class TrackWidget(QWidget):
         self.setLayout(hLayout)
 
 class TracksWindow(QWidget):
-    def __init__(self, tracks=[]):
-        super().__init__()
+    def __init__(self, parent, tracks=[]):
+        super().__init__(parent)
 
         self.tracks = tracks
 
@@ -119,7 +119,7 @@ class TracksWindow(QWidget):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     # QCoreApplication.setApplicationName("HyperEdit")
-    window = TracksWindow(tracks=[True, False, True])
+    window = TracksWindow(parent=None, tracks=[True, False, True])
     window.show()
     sys.exit(app.exec())
     

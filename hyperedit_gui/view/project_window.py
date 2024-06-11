@@ -44,8 +44,8 @@ class ProjectWidget(QWidget):
         self.setLayout(hLayout)
 
 class ProjectWindow(QWidget):
-    def __init__(self, projects=[]):
-        super().__init__()
+    def __init__(self, parent, projects=[]):
+        super().__init__(parent)
 
         self.projects = projects
 
@@ -53,8 +53,11 @@ class ProjectWindow(QWidget):
         self.resize(600, 400)
 
         self.layout = QVBoxLayout(self)
-        self.layout.addWidget(QPushButton("New project"))
-        self.layout.addWidget(QPushButton("Load project"))
+        new_project_button = QPushButton("New project")
+        self.layout.addWidget(new_project_button)
+        load_project_button = QPushButton("Load project")
+        load_project_button.clicked.connect(self.loadProject)
+        self.layout.addWidget(load_project_button)
         
         self.listWidget = QListWidget()
         self.layout.addWidget(self.listWidget)
@@ -70,6 +73,11 @@ class ProjectWindow(QWidget):
             self.listWidget.addItem(listItem)
             self.listWidget.setItemWidget(listItem, projectWidget)
 
+    def loadProject(self):
+        print("Loading project...")
+        self.parent().setCurrentIndex(1)
+        
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
@@ -79,6 +87,6 @@ if __name__ == "__main__":
         ("Project Gamma", "/path/to/gamma")
     ]
 
-    window = ProjectWindow(projects)
+    window = ProjectWindow(parent=None, projects=projects)
     window.show()
     sys.exit(app.exec())
