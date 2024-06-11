@@ -31,17 +31,23 @@ class ProjectWidget(QWidget):
         openButton.setMaximumWidth(80)
         # openButton.clicked.connect(self.openProject)
 
+        # Remove button
+        removeButton = QPushButton("Remove")
+        removeButton.setMaximumWidth(80)
+
         # Setup layouts
         vLayout.addWidget(nameLabel)
         vLayout.addWidget(pathLabel)
         hLayout.addLayout(vLayout)
-        # hLayout.addWidget(openButton, alignment=Qt.AlignRight)
-        hLayout.addWidget(openButton)
+        hLayout.addWidget(openButton, alignment=Qt.AlignRight)
+        hLayout.addWidget(removeButton)
         self.setLayout(hLayout)
 
 class ProjectWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, projects=[]):
         super().__init__()
+
+        self.projects = projects
 
         # Set the main window's size
         self.resize(600, 400)
@@ -58,12 +64,7 @@ class ProjectWindow(QMainWindow):
         self.populateList()
 
     def populateList(self):
-        projects = [
-            ("Project Alpha", "/path/to/alpha"),
-            ("Project Beta", "/path/to/beta"),
-            ("Project Gamma", "/path/to/gamma")
-        ]
-        for name, path in projects:
+        for name, path in self.projects:
             listItem = QListWidgetItem(self.listWidget)
             projectWidget = ProjectWidget(name, path)
             listItem.setSizeHint(projectWidget.sizeHint())
@@ -73,6 +74,13 @@ class ProjectWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = ProjectWindow()
+
+    projects = [
+        ("Project Alpha", "/path/to/alpha"),
+        ("Project Beta", "/path/to/beta"),
+        ("Project Gamma", "/path/to/gamma")
+    ]
+
+    window = ProjectWindow(projects)
     window.show()
     sys.exit(app.exec())
