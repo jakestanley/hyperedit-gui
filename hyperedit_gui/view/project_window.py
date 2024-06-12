@@ -1,5 +1,5 @@
 import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QVBoxLayout, QPushButton, QWidget, QTableView, QStyledItemDelegate, QHBoxLayout, QLabel, QListWidgetItem, QListWidget
+from PySide6.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QVBoxLayout, QPushButton, QWidget, QTableView, QStyledItemDelegate, QHBoxLayout, QLabel, QListWidgetItem, QListWidget, QFileDialog
 from PySide6.QtGui import QAction, QStandardItemModel, QStandardItem
 from PySide6.QtCore import QCoreApplication, Qt
 
@@ -54,6 +54,7 @@ class ProjectWindow(QWidget):
 
         self.layout = QVBoxLayout(self)
         new_project_button = QPushButton("New project")
+        new_project_button.clicked.connect(self.newProject)
         self.layout.addWidget(new_project_button)
         load_project_button = QPushButton("Load project")
         load_project_button.clicked.connect(self.loadProject)
@@ -73,8 +74,23 @@ class ProjectWindow(QWidget):
             self.listWidget.addItem(listItem)
             self.listWidget.setItemWidget(listItem, projectWidget)
 
+    def newProject(self):
+        print("New project...")
+        options = QFileDialog.Options()
+        fileName, _ = QFileDialog.getOpenFileName(self,
+            "QFileDialog.getOpenFileName()", "",
+            "Video Files (*.mp4 *.avi *.mov *.mkv);;All Files (*)", options=options)
+        if fileName:
+            print(f"Selected file: {fileName}")
+
     def loadProject(self):
         print("Loading project...")
+        options = QFileDialog.Options()
+        fileName, _ = QFileDialog.getOpenFileName(self,
+            "QFileDialog.getOpenFileName()", "",
+            "Video or Project Files (*.json *.mp4 *.avi *.mov *.mkv);;All Files (*)", options=options)
+        if fileName:
+            print(f"Selected file: {fileName}")
         self.parent().setCurrentIndex(1)
         
 

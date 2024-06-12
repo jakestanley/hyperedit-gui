@@ -34,6 +34,7 @@ class TracksWindow(QWidget):
         self.layout = QVBoxLayout(self)
 
         self.layout.addWidget(self.create_tracks_groupbox())
+        self.layout.addLayout(self.create_back_next_buttons())
 
         self.populateList()
 
@@ -106,6 +107,20 @@ class TracksWindow(QWidget):
         hlayout.addWidget(QLabel("by seconds"))
         hlayout.addWidget(self.deaggress_seconds_line_edit)
         return hlayout
+    
+    def create_back_next_buttons(self):
+        buttonLayout = QHBoxLayout()
+        backButton = QPushButton('Projects', self)
+        nextButton = QPushButton('Edit SRTs', self)
+
+        buttonLayout.addWidget(backButton)
+        buttonLayout.addStretch(1)
+        buttonLayout.addWidget(nextButton)
+
+        backButton.clicked.connect(lambda: self.parent().setCurrentIndex(0))
+        nextButton.clicked.connect(lambda: self.parent().setCurrentIndex(2))
+
+        return buttonLayout
 
     def populateList(self):
         for i in range(0, len(self.tracks)):

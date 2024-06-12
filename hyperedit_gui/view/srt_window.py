@@ -64,8 +64,24 @@ class SrtWindow(QWidget):
         self.tableView.setColumnWidth(_ACTION_INDEX, 200)
 
         self.layout.addWidget(self.tableView)
+        self.layout.addLayout(self.create_back_next_buttons())
 
         self.populateTable()
+
+    def create_back_next_buttons(self):
+
+        buttonLayout = QHBoxLayout()
+        backButton = QPushButton('Edit SRTs', self)
+        # nextButton = QPushButton('Edit SRTs', self)
+
+        buttonLayout.addWidget(backButton)
+        buttonLayout.addStretch(1)
+        # buttonLayout.addWidget(nextButton)
+
+        backButton.clicked.connect(lambda: self.parent().setCurrentIndex(1))
+        # nextButton.clicked.connect(lambda: self.parent().setCurrentIndex(3))
+
+        return buttonLayout
 
     def populateTable(self):
         for e in self.srt:
@@ -86,6 +102,6 @@ class SrtWindow(QWidget):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     srts = parse_srt("data/test.srt")
-    window = SrtWindow(srts)
+    window = SrtWindow(parent=None, srts=srts)
     window.show()
     sys.exit(app.exec())
