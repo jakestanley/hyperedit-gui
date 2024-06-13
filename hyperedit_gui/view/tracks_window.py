@@ -3,6 +3,8 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QLabel
 from PySide6.QtGui import QAction, QDoubleValidator
 from PySide6.QtCore import QCoreApplication, Qt
 
+from hyperedit_gui.controller import Controller
+
 class TrackWidget(QWidget):
     def __init__(self, index, enabled):
         super().__init__()
@@ -23,9 +25,10 @@ class TrackWidget(QWidget):
         self.setLayout(hLayout)
 
 class TracksWindow(QWidget):
-    def __init__(self, parent, tracks=[]):
+    def __init__(self, parent, tracks=[], controller=None):
         super().__init__(parent)
 
+        self.controller = controller
         self.tracks = tracks
 
         # Set the main window's size
@@ -134,7 +137,7 @@ class TracksWindow(QWidget):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     # QCoreApplication.setApplicationName("HyperEdit")
-    window = TracksWindow(parent=None, tracks=[True, False, True])
+    window = TracksWindow(parent=None, tracks=[True, False, True], controller=Controller())
     window.show()
     sys.exit(app.exec())
     

@@ -3,6 +3,8 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QVBoxL
 from PySide6.QtGui import QAction, QStandardItemModel, QStandardItem
 from PySide6.QtCore import QCoreApplication, Qt
 
+from hyperedit_gui.controller import Controller
+
 class ProjectWidget(QWidget):
     def __init__(self, name, path):
         super().__init__()
@@ -44,9 +46,10 @@ class ProjectWidget(QWidget):
         self.setLayout(hLayout)
 
 class ProjectWindow(QWidget):
-    def __init__(self, parent, projects=[]):
+    def __init__(self, parent, projects=[], controller=None):
         super().__init__(parent)
 
+        self.controller = controller
         self.projects = projects
 
         # Set the main window's size
@@ -81,7 +84,8 @@ class ProjectWindow(QWidget):
             "QFileDialog.getOpenFileName()", "",
             "Video Files (*.mp4 *.avi *.mov *.mkv);;All Files (*)", options=options)
         if fileName:
-            print(f"Selected file: {fileName}")
+            if (self.controller.create_project(fileName)):
+                self.parent.setCurrentIndex(1)
 
     def loadProject(self):
         print("Loading project...")
@@ -90,8 +94,8 @@ class ProjectWindow(QWidget):
             "QFileDialog.getOpenFileName()", "",
             "Video or Project Files (*.json *.mp4 *.avi *.mov *.mkv);;All Files (*)", options=options)
         if fileName:
-            print(f"Selected file: {fileName}")
-        self.parent().setCurrentIndex(1)
+            if (self.controller.load_project(fileName)):
+                self.parent().setCurrentIndex(1)
         
 
 if __name__ == "__main__":
@@ -103,6 +107,6 @@ if __name__ == "__main__":
         ("Project Gamma", "/path/to/gamma")
     ]
 
-    window = ProjectWindow(parent=None, projects=projects)
+    window = ProjectWindow(parent=None, projects=projects, controller=Controller())
     window.show()
     sys.exit(app.exec())

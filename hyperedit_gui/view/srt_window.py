@@ -5,6 +5,8 @@ from PySide6.QtCore import QCoreApplication, Qt
 
 from hyperedit.srt import parse_srt
 
+from hyperedit_gui.controller import Controller
+
 _ACTION_INDEX = 3
 
 # TODO this should go into hyperedit$
@@ -44,9 +46,10 @@ class SrtEntry:
 
 class SrtWindow(QWidget):
 
-    def __init__(self, parent, srts):
+    def __init__(self, parent, srts, controller=None):
         super().__init__(parent)
 
+        self.controller = controller
         self.srt = srts
 
         self.resize(600, 400)
@@ -102,6 +105,6 @@ class SrtWindow(QWidget):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     srts = parse_srt("data/test.srt")
-    window = SrtWindow(parent=None, srts=srts)
+    window = SrtWindow(parent=None, srts=srts, controller=Controller())
     window.show()
     sys.exit(app.exec())
