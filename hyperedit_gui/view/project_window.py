@@ -1,41 +1,45 @@
 import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QVBoxLayout, QPushButton, QWidget, QTableView, QStyledItemDelegate, QHBoxLayout, QLabel, QListWidgetItem, QListWidget, QFileDialog
-from PySide6.QtGui import QAction, QStandardItemModel, QStandardItem
-from PySide6.QtCore import QCoreApplication, Qt
 
+from PySide6.QtWidgets import QApplication, QVBoxLayout, QPushButton, \
+    QWidget, QHBoxLayout, QLabel, QListWidgetItem, QListWidget, \
+    QFileDialog
+
+from PySide6.QtCore import Qt
+
+from hyperedit_gui.projects import Project
 from hyperedit_gui.controller import Controller
+from hyperedit_gui.config import GetConfig, HeConfig
 
 class ProjectWidget(QWidget):
-    def __init__(self, name, path):
+    def __init__(self, project: Project, controller: Controller):
         super().__init__()
-        self.name = name
-        self.path = path
+        self.project = project
+        self.controller = controller
         self.initUI()
     
     def initUI(self):
-        # Layouts
-        # vLayout = QVBoxLayout(self)
         
         hLayout = QHBoxLayout(self)
         hLayout.setContentsMargins(8, 8, 8, 8)
 
         # Project name label
         vLayout = QVBoxLayout(self)
-        nameLabel = QLabel(self.name)
+        nameLabel = QLabel(self.project.name)
         nameLabel.setStyleSheet("font-size: 14px;")
 
         # Project path label
-        pathLabel = QLabel(self.path)
+        pathLabel = QLabel(self.project.name)
         pathLabel.setStyleSheet("font-size: 12px; color: grey;")
 
         # Open button
         openButton = QPushButton("Open")
         openButton.setMaximumWidth(80)
-        # openButton.clicked.connect(self.openProject)
+        openButton.clicked.connect(self.open_project)
 
         # Remove button
         removeButton = QPushButton("Remove")
         removeButton.setMaximumWidth(80)
+        removeButton.clicked.connect(self.remove_project)
 
         # Setup layouts
         vLayout.addWidget(nameLabel)
@@ -45,15 +49,22 @@ class ProjectWidget(QWidget):
         hLayout.addWidget(removeButton)
         self.setLayout(hLayout)
 
+    def open_project(self):
+        self.controller.load_project(self.project.path)
+
+    def remove_project(self):
+        self.controller.remove_project(self.project.path)
+
 class ProjectWindow(QWidget):
-    def __init__(self, parent, projects=[], controller=None):
+
+    def __init__(self, parent, controller: Controller):
         super().__init__(parent)
 
         self.controller = controller
-        self.projects = projects
+        GetConfig().AddObserver(self)
 
         # Set the main window's size
-        self.resize(600, 400)
+        self.resize(800, 600)
 
         self.layout = QVBoxLayout(self)
         new_project_button = QPushButton("New project")
@@ -65,13 +76,14 @@ class ProjectWindow(QWidget):
         
         self.listWidget = QListWidget()
         self.layout.addWidget(self.listWidget)
-        # self.setCentralWidget(self.listWidget)
         self.populateList()
 
     def populateList(self):
-        for name, path in self.projects:
+
+        self.listWidget.clear()
+        for project in self.controller.read_projects():
             listItem = QListWidgetItem(self.listWidget)
-            projectWidget = ProjectWidget(name, path)
+            projectWidget = ProjectWidget(project, self.controller)
             listItem.setSizeHint(projectWidget.sizeHint())
             listItem.setFlags(listItem.flags() & ~Qt.ItemIsSelectable)
             self.listWidget.addItem(listItem)
@@ -85,7 +97,9 @@ class ProjectWindow(QWidget):
             "Video Files (*.mp4 *.avi *.mov *.mkv);;All Files (*)", options=options)
         if fileName:
             if (self.controller.create_project(fileName)):
-                self.parent.setCurrentIndex(1)
+                self.parent().setCurrentIndex(1)
+            else:
+                print("Project exists!")
 
     def loadProject(self):
         print("Loading project...")
@@ -96,6 +110,9 @@ class ProjectWindow(QWidget):
         if fileName:
             if (self.controller.load_project(fileName)):
                 self.parent().setCurrentIndex(1)
+
+    def OnConfigUpdate(self):
+        self.populateList()
         
 
 if __name__ == "__main__":
@@ -107,6 +124,7 @@ if __name__ == "__main__":
         ("Project Gamma", "/path/to/gamma")
     ]
 
-    window = ProjectWindow(parent=None, projects=projects, controller=Controller())
+    config: HeConfig = GetConfig()
+    window = ProjectWindow(parent=None, controller=Controller())
     window.show()
     sys.exit(app.exec())

@@ -3,11 +3,13 @@ import json
 
 from PySide6.QtWidgets import QInputDialog
 
+from hyperedit_gui.config import GetConfig
+from hyperedit_gui.projects import ReadProject
+
 class Controller:
     def __init__(self):
-        pass
+        self.selected_project = None
 
-    # TODO: project class
     def create_project(self, video_file_path):
         directory = os.path.dirname(video_file_path)
         basename, ext = os.path.splitext(os.path.basename(video_file_path))
@@ -34,17 +36,25 @@ class Controller:
         project_file_path = os.path.join(project_folder, "project.json")
         with open(project_file_path, "w") as project_file:
             project = {}
-            project["video_file"] = video_file_path
+            project["file"] = video_file_path
+            project["name"] = project_name
             # project["tracks"] = self.tracks
             json.dump(project, project_file, indent=4)
 
+        GetConfig().AddProject(project_file_path)
+        GetConfig().Save()
+
+        self.selected_project = project
+        return self.selected_project
+    
+    def load_project(self, project_path):
+        self.selected_project = ReadProject(project_path)
         return True
+    
+    def remove_project(self, project_path):
+        GetConfig().RemoveProject(project_path)
+        GetConfig().Save()
+    
+    def read_projects(self):
+        return GetConfig().ReadProjects()
 
-    def load_project(self, project_file_path):
-
-        with open(project_file_path, "r") as project_file:
-            project = json.load(project_file)
-        
-        # TODO handle IO exceptions etc
-        video_file_path = project["video_file"]
-        print("Loaded project")
