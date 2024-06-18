@@ -3,6 +3,11 @@ from typing import List
 
 _MAX_PROJECTS = 10
 
+class Project:
+    def __init__(self, name, path) -> None:
+        self.name = name
+        self.path = path
+
 class RecentProjects:
     def __init__(self, projects=[]):
         self.projects = projects
@@ -27,22 +32,13 @@ class RecentProjects:
             ReadProject(project) for project in self.projects
         ]
 
-def ReadProject(project_path):
+def ReadProject(project_path) -> Project:
     try:
         with open(project_path, 'r') as project_file:
             project = json.load(project_file)
-            return {
-                'name': project.get('name', "<NO NAME>"),
-                'path': project_path
-            }
+            return Project(project.get('name', "<NO NAME>"), project_path)
     except json.decoder.JSONDecodeError:
-        return {
-            'name': "<INVALID JSON>",
-            'path': project_path
-        }
+        return Project("<INVALID JSON>", project_path)
     except FileNotFoundError:
-        return {
-            'name': "<MISSING>",
-            'path': project_path
-        }
+        return Project("<MISSING>", project_path)
 

@@ -3,13 +3,13 @@ import json
 
 from PySide6.QtWidgets import QInputDialog
 
-from hyperedit_gui.config import GetConfig, HeConfig
+from hyperedit_gui.config import GetConfig
+from hyperedit_gui.projects import ReadProject
 
 class Controller:
     def __init__(self):
-        pass
+        self.selected_project = None
 
-    # TODO: project class
     def create_project(self, video_file_path):
         directory = os.path.dirname(video_file_path)
         basename, ext = os.path.splitext(os.path.basename(video_file_path))
@@ -43,10 +43,13 @@ class Controller:
 
         GetConfig().AddProject(project_file_path)
         GetConfig().Save()
-        return project
+
+        self.selected_project = project
+        return self.selected_project
     
     def load_project(self, project_path):
-        return False
+        self.selected_project = ReadProject(project_path)
+        return True
     
     def remove_project(self, project_path):
         GetConfig().RemoveProject(project_path)

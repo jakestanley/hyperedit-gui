@@ -6,14 +6,14 @@ from PySide6.QtWidgets import QApplication, QVBoxLayout, QPushButton, \
 
 from PySide6.QtCore import Qt
 
+from hyperedit_gui.projects import Project
 from hyperedit_gui.controller import Controller
 from hyperedit_gui.config import GetConfig, HeConfig
 
 class ProjectWidget(QWidget):
-    def __init__(self, name, path, controller: Controller):
+    def __init__(self, project: Project, controller: Controller):
         super().__init__()
-        self.name = name
-        self.path = path
+        self.project = project
         self.controller = controller
         self.initUI()
     
@@ -24,11 +24,11 @@ class ProjectWidget(QWidget):
 
         # Project name label
         vLayout = QVBoxLayout(self)
-        nameLabel = QLabel(self.name)
+        nameLabel = QLabel(self.project.name)
         nameLabel.setStyleSheet("font-size: 14px;")
 
         # Project path label
-        pathLabel = QLabel(self.path)
+        pathLabel = QLabel(self.project.name)
         pathLabel.setStyleSheet("font-size: 12px; color: grey;")
 
         # Open button
@@ -50,16 +50,15 @@ class ProjectWidget(QWidget):
         self.setLayout(hLayout)
 
     def open_project(self):
-        self.controller.load_project(self.path)
+        self.controller.load_project(self.project.path)
 
     def remove_project(self):
-        self.controller.remove_project(self.path)
+        self.controller.remove_project(self.project.path)
 
 class ProjectWindow(QWidget):
 
     def __init__(self, parent, controller: Controller):
         super().__init__(parent)
-        print("project window init")
 
         self.controller = controller
         GetConfig().AddObserver(self)
@@ -77,7 +76,6 @@ class ProjectWindow(QWidget):
         
         self.listWidget = QListWidget()
         self.layout.addWidget(self.listWidget)
-        # self.setCentralWidget(self.listWidget)
         self.populateList()
 
     def populateList(self):
@@ -85,7 +83,7 @@ class ProjectWindow(QWidget):
         self.listWidget.clear()
         for project in self.controller.read_projects():
             listItem = QListWidgetItem(self.listWidget)
-            projectWidget = ProjectWidget(project['name'], project['path'], self.controller)
+            projectWidget = ProjectWidget(project, self.controller)
             listItem.setSizeHint(projectWidget.sizeHint())
             listItem.setFlags(listItem.flags() & ~Qt.ItemIsSelectable)
             self.listWidget.addItem(listItem)
