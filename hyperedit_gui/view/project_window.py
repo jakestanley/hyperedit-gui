@@ -4,7 +4,7 @@ from PySide6.QtGui import QAction, QStandardItemModel, QStandardItem
 from PySide6.QtCore import QCoreApplication, Qt
 
 from hyperedit_gui.controller import Controller
-from hyperedit_gui.config import HeConfig
+from hyperedit_gui.config import GetConfig, HeConfig
 
 class ProjectWidget(QWidget):
     def __init__(self, name, path, controller: Controller):
@@ -117,7 +117,7 @@ if __name__ == "__main__":
         ("Project Gamma", "/path/to/gamma")
     ]
 
-    config: HeConfig = HeConfig()
-    window = ProjectWindow(parent=None, controller=Controller(config))
+    config: HeConfig = GetConfig()
+    window = ProjectWindow(parent=None, controller=Controller())
     window.show()
     sys.exit(app.exec())

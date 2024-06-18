@@ -9,7 +9,7 @@ from hyperedit_gui.view.tracks_window import TracksWindow
 from hyperedit_gui.view.srt_window import SrtWindow
 from hyperedit_gui.controller import Controller
 
-from hyperedit_gui.config import HeConfig
+from hyperedit_gui.config import GetConfig, HeConfig
 
 class MainWindow(QMainWindow):
     def __init__(self, controller: Controller):
@@ -35,8 +35,8 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     srts = parse_srt("data/test.srt")
     # we wouldn't normally do this, this would be accessed from the controller
-    config: HeConfig = HeConfig()
-    controller = Controller(config)
+    config: HeConfig = GetConfig()
+    controller = Controller()
     mainWindow = MainWindow(controller)
     mainWindow.show()
     sys.exit(app.exec())
