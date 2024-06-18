@@ -4,17 +4,17 @@ from PySide6.QtGui import QAction, QStandardItemModel, QStandardItem
 from PySide6.QtCore import QCoreApplication, Qt
 
 from hyperedit_gui.controller import Controller
+from hyperedit_gui.config import HeConfig
 
 class ProjectWidget(QWidget):
-    def __init__(self, name, path):
+    def __init__(self, name, path, controller: Controller):
         super().__init__()
         self.name = name
         self.path = path
+        self.controller = controller
         self.initUI()
     
     def initUI(self):
-        # Layouts
-        # vLayout = QVBoxLayout(self)
         
         hLayout = QHBoxLayout(self)
         hLayout.setContentsMargins(8, 8, 8, 8)
@@ -31,11 +31,12 @@ class ProjectWidget(QWidget):
         # Open button
         openButton = QPushButton("Open")
         openButton.setMaximumWidth(80)
-        # openButton.clicked.connect(self.openProject)
+        openButton.clicked.connect(self.open_project)
 
         # Remove button
         removeButton = QPushButton("Remove")
         removeButton.setMaximumWidth(80)
+        removeButton.clicked.connect(self.remove_project)
 
         # Setup layouts
         vLayout.addWidget(nameLabel)
@@ -45,15 +46,21 @@ class ProjectWidget(QWidget):
         hLayout.addWidget(removeButton)
         self.setLayout(hLayout)
 
+    def open_project(self):
+        self.controller.load_project(self.path)
+
+    def remove_project(self):
+        self.controller.remove_project(self.path)
+
 class ProjectWindow(QWidget):
-    def __init__(self, parent, projects=[], controller=None):
+    def __init__(self, parent, controller: Controller):
         super().__init__(parent)
+        print("project window init")
 
         self.controller = controller
-        self.projects = projects
 
         # Set the main window's size
-        self.resize(600, 400)
+        self.resize(800, 600)
 
         self.layout = QVBoxLayout(self)
         new_project_button = QPushButton("New project")
@@ -69,9 +76,10 @@ class ProjectWindow(QWidget):
         self.populateList()
 
     def populateList(self):
-        for name, path in self.projects:
+
+        for project in self.controller.read_projects():
             listItem = QListWidgetItem(self.listWidget)
-            projectWidget = ProjectWidget(name, path)
+            projectWidget = ProjectWidget(project['name'], project['path'], self.controller)
             listItem.setSizeHint(projectWidget.sizeHint())
             listItem.setFlags(listItem.flags() & ~Qt.ItemIsSelectable)
             self.listWidget.addItem(listItem)
@@ -85,7 +93,9 @@ class ProjectWindow(QWidget):
             "Video Files (*.mp4 *.avi *.mov *.mkv);;All Files (*)", options=options)
         if fileName:
             if (self.controller.create_project(fileName)):
-                self.parent.setCurrentIndex(1)
+                self.parent().setCurrentIndex(1)
+            else:
+                print("Project exists!")
 
     def loadProject(self):
         print("Loading project...")
@@ -107,6 +117,7 @@ if __name__ == "__main__":
         ("Project Gamma", "/path/to/gamma")
     ]
 
-    window = ProjectWindow(parent=None, projects=projects, controller=Controller())
+    config: HeConfig = HeConfig()
+    window = ProjectWindow(parent=None, controller=Controller(config))
     window.show()
     sys.exit(app.exec())

@@ -3,9 +3,11 @@ import json
 
 from PySide6.QtWidgets import QInputDialog
 
+from hyperedit_gui.config import HeConfig
+
 class Controller:
-    def __init__(self):
-        pass
+    def __init__(self, config: HeConfig):
+        self.config = config
 
     # TODO: project class
     def create_project(self, video_file_path):
@@ -34,17 +36,23 @@ class Controller:
         project_file_path = os.path.join(project_folder, "project.json")
         with open(project_file_path, "w") as project_file:
             project = {}
-            project["video_file"] = video_file_path
+            project["file"] = video_file_path
+            project["name"] = project_name
             # project["tracks"] = self.tracks
             json.dump(project, project_file, indent=4)
 
-        return True
+        self.config.projects.add_project(project_file_path)
+        self.config.Save()
+        return project
+    
+    def load_project(self, project_path):
+        return False
+    
+    def remove_project(self, project_path):
+        print("remove project2 called")
+        self.config.projects.remove_project(project_path)
+        self.config.Save()
+    
+    def read_projects(self):
+        return self.config.projects.read_projects()
 
-    def load_project(self, project_file_path):
-
-        with open(project_file_path, "r") as project_file:
-            project = json.load(project_file)
-        
-        # TODO handle IO exceptions etc
-        video_file_path = project["video_file"]
-        print("Loaded project")
