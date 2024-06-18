@@ -12,14 +12,14 @@ python = ">=3.9,<3.13"
 pyqt6 = "^6.7.0"
 appdirs = "^1.4.4"
 pyside6 = "^6.7.1"
-ffmpeg = "^1.4"
-ffprobe-python = "^1.0.3"
 
 [tool.poetry.scripts]
 hyperedit = "scripts.hyperedit_gui:main"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
+ffmpeg = "^1.4"
+ffprobe-python = "^1.0.3"
 
 [build-system]
 requires = ["poetry-core"]

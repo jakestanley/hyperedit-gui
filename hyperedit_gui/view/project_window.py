@@ -50,10 +50,10 @@ class ProjectWidget(QWidget):
         self.setLayout(hLayout)
 
     def open_project(self):
-        self.controller.load_project(self.project.path)
+        self.controller.load_project(self.project.project_path)
 
     def remove_project(self):
-        self.controller.remove_project(self.project.path)
+        self.controller.remove_project(self.project.project_path)
 
 class ProjectWindow(QWidget):
 
@@ -61,6 +61,7 @@ class ProjectWindow(QWidget):
         super().__init__(parent)
 
         self.controller = controller
+        self.controller.AddProjectChangeObserver(self)
         GetConfig().AddObserver(self)
 
         # Set the main window's size
@@ -96,10 +97,7 @@ class ProjectWindow(QWidget):
             "QFileDialog.getOpenFileName()", "",
             "Video Files (*.mp4 *.avi *.mov *.mkv);;All Files (*)", options=options)
         if fileName:
-            if (self.controller.create_project(fileName)):
-                self.parent().setCurrentIndex(1)
-            else:
-                print("Project exists!")
+            self.controller.create_project(fileName)
 
     def loadProject(self):
         print("Loading project...")
@@ -108,11 +106,13 @@ class ProjectWindow(QWidget):
             "QFileDialog.getOpenFileName()", "",
             "Video or Project Files (*.json *.mp4 *.avi *.mov *.mkv);;All Files (*)", options=options)
         if fileName:
-            if (self.controller.load_project(fileName)):
-                self.parent().setCurrentIndex(1)
+            self.controller.load_project(fileName)
 
     def OnConfigUpdate(self):
         self.populateList()
+
+    def OnProjectChange(self):
+        self.parent().setCurrentIndex(1)
         
 
 if __name__ == "__main__":

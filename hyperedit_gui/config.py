@@ -17,15 +17,15 @@ class HeConfig(Config):
         for observer in self._observers:
             observer.OnConfigUpdate()
 
-    def ReadProjects(self):
+    def ReadRecentProjects(self):
         return self._projects.read_projects()
     
-    def AddProject(self, project):
+    def AddRecentProject(self, project):
         rs = self._projects.add_project(project)
         self.NotifyObservers()
         return rs
     
-    def RemoveProject(self, project):
+    def RemoveRecentProject(self, project):
         # TODO touch_project interaction
         rs = self._projects.remove_project(project)
         self.NotifyObservers()
