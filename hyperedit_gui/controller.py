@@ -41,7 +41,7 @@ class Controller:
             # project["tracks"] = self.tracks
             json.dump(project, project_file, indent=4)
 
-        GetConfig().projects.add_project(project_file_path)
+        GetConfig().AddProject(project_file_path)
         GetConfig().Save()
         return project
     
@@ -49,10 +49,9 @@ class Controller:
         return False
     
     def remove_project(self, project_path):
-        print("remove project2 called")
-        GetConfig().projects.remove_project(project_path)
+        GetConfig().RemoveProject(project_path)
         GetConfig().Save()
     
     def read_projects(self):
-        return GetConfig().projects.read_projects()
+        return GetConfig().ReadProjects()
 

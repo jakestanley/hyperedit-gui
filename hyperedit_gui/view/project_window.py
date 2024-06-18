@@ -1,7 +1,10 @@
 import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QVBoxLayout, QPushButton, QWidget, QTableView, QStyledItemDelegate, QHBoxLayout, QLabel, QListWidgetItem, QListWidget, QFileDialog
-from PySide6.QtGui import QAction, QStandardItemModel, QStandardItem
-from PySide6.QtCore import QCoreApplication, Qt
+
+from PySide6.QtWidgets import QApplication, QVBoxLayout, QPushButton, \
+    QWidget, QHBoxLayout, QLabel, QListWidgetItem, QListWidget, \
+    QFileDialog
+
+from PySide6.QtCore import Qt
 
 from hyperedit_gui.controller import Controller
 from hyperedit_gui.config import GetConfig, HeConfig
@@ -53,11 +56,13 @@ class ProjectWidget(QWidget):
         self.controller.remove_project(self.path)
 
 class ProjectWindow(QWidget):
+
     def __init__(self, parent, controller: Controller):
         super().__init__(parent)
         print("project window init")
 
         self.controller = controller
+        GetConfig().AddObserver(self)
 
         # Set the main window's size
         self.resize(800, 600)
@@ -77,6 +82,7 @@ class ProjectWindow(QWidget):
 
     def populateList(self):
 
+        self.listWidget.clear()
         for project in self.controller.read_projects():
             listItem = QListWidgetItem(self.listWidget)
             projectWidget = ProjectWidget(project['name'], project['path'], self.controller)
@@ -106,6 +112,9 @@ class ProjectWindow(QWidget):
         if fileName:
             if (self.controller.load_project(fileName)):
                 self.parent().setCurrentIndex(1)
+
+    def OnConfigUpdate(self):
+        self.populateList()
         
 
 if __name__ == "__main__":
