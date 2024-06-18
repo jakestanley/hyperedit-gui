@@ -43,4 +43,11 @@ class Controller:
     def read_projects(self):
         return GetConfig().ReadRecentProjects()
     
+    def GetTracks(self):
+        return [False for track in get_audio_tracks(self._current_project.video_path)]
 
+    def PreviewTrack(self, index):
+        print(f"Previewing track {index}")
+        # TODO stop button
+        # this works in cmd
+        # ffmpeg -y -i ".\2024-06-16 20-59-05.mkv" -map 0:a:1 -af "acompressor, silenceremove=stop_periods=-1:stop_duration=0.5:stop_threshold=-50dB" -f wav - | ffplay -nodisp -

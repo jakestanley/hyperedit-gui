@@ -3,13 +3,16 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QLabel
 from PySide6.QtGui import QAction, QDoubleValidator
 from PySide6.QtCore import QCoreApplication, Qt
 
+from ffprobe import FFProbe
+from hyperedit.extract_dialog import get_audio_tracks
 from hyperedit_gui.controller import Controller
 
 class TrackWidget(QWidget):
-    def __init__(self, index, enabled):
+    def __init__(self, index, enabled, controller):
         super().__init__()
         self.index = index
         self.enabled = enabled
+        self.controller = controller
         self.initUI()
 
     def initUI(self):
@@ -21,15 +24,21 @@ class TrackWidget(QWidget):
         hLayout.addStretch()
         hLayout.addWidget(self.checkbox, alignment=Qt.AlignRight)
         previewButton = QPushButton("Preview")
+        previewButton.clicked.connect(self.preview_track)
         hLayout.addWidget(previewButton, alignment=Qt.AlignRight)
         self.setLayout(hLayout)
 
+    def preview_track(self):
+        self.controller.PreviewTrack(self.index)
+
 class TracksWindow(QWidget):
-    def __init__(self, parent, tracks=[], controller=None):
+    def __init__(self, parent, tracks=[], controller: Controller=None):
         super().__init__(parent)
 
         self.controller = controller
         self.tracks = tracks
+
+        self.controller.AddProjectChangeObserver(self)
 
         # Set the main window's size
         self.resize(600, 480)
@@ -126,13 +135,22 @@ class TracksWindow(QWidget):
         return buttonLayout
 
     def populateList(self):
+        self.listWidget.clear()
         for i in range(0, len(self.tracks)):
             listItem = QListWidgetItem(self.listWidget)
-            trackWidget = TrackWidget(i, self.tracks[i])
+            trackWidget = TrackWidget(i, self.tracks[i], self.controller)
             listItem.setSizeHint(trackWidget.sizeHint())
             listItem.setFlags(listItem.flags() & ~Qt.ItemIsSelectable)
             self.listWidget.addItem(listItem)
             self.listWidget.setItemWidget(listItem, trackWidget)
+
+    # TODO: this could take a project as arguments
+    def OnProjectChange(self):
+
+        # TODO merge with tracks loaded from project. if a mismatch, notify and clear project tracks
+        self.tracks = self.controller.GetTracks()
+        self.populateList()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
