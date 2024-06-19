@@ -28,7 +28,7 @@ class ProjectWidget(QWidget):
         nameLabel.setStyleSheet("font-size: 14px;")
 
         # Project path label
-        pathLabel = QLabel(self.project.name)
+        pathLabel = QLabel(self.project.project_path)
         pathLabel.setStyleSheet("font-size: 12px; color: grey;")
 
         # Open button
