@@ -11,10 +11,11 @@ _ACTION_INDEX = 3
 
 # TODO this should go into hyperedit$
 class ActionPanel(QWidget):
-    def __init__(self, parent=None, id=None):
+    def __init__(self, parent=None, id=None, controller=None):
         super().__init__(parent)
 
         self.id = id
+        self.controller = controller # TODO controller should REALLY be a singleton
         self.layout = QHBoxLayout(self)
         self.layout.setContentsMargins(2, 0, 2, 0)
         self.layout.setSpacing(2)
@@ -34,6 +35,7 @@ class ActionPanel(QWidget):
 
     def preview(self):
         print(f"Previewing {self.id}")
+        self.controller.PreviewSrt(self.id)
     
 class SrtEntry:
     def __init__(self, entry) -> None:
@@ -50,7 +52,8 @@ class SrtWindow(QWidget):
         super().__init__(parent)
 
         self.controller = controller
-        self.srt = srts
+        self.controller.AddSrtChangeObserver(self)
+        self.srts = srts
 
         self.resize(600, 400)
 
@@ -74,8 +77,7 @@ class SrtWindow(QWidget):
     def create_back_next_buttons(self):
 
         buttonLayout = QHBoxLayout()
-        backButton = QPushButton('Edit SRTs', self)
-        # nextButton = QPushButton('Edit SRTs', self)
+        backButton = QPushButton('Tracks', self)
 
         buttonLayout.addWidget(backButton)
         buttonLayout.addStretch(1)
@@ -87,7 +89,8 @@ class SrtWindow(QWidget):
         return buttonLayout
 
     def populateTable(self):
-        for e in self.srt:
+        # self.model.clear()
+        for e in self.srts:
             entry = SrtEntry(e)
             idItem = QStandardItem(entry.id)
             idItem.setFlags(~Qt.ItemIsEditable)
@@ -99,8 +102,12 @@ class SrtWindow(QWidget):
             actionItem.setFlags(~Qt.ItemIsSelectable)
             self.model.appendRow([idItem, startItem, endItem, actionItem])
 
-            actionPanel = ActionPanel(id=entry.id)
+            actionPanel = ActionPanel(id=entry.id, controller=self.controller)
             self.tableView.setIndexWidget(self.model.index(self.model.rowCount() - 1, _ACTION_INDEX), actionPanel)
+
+    def OnSrtChange(self):
+        self.srts = self.controller.GetSrt()
+        self.populateTable()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

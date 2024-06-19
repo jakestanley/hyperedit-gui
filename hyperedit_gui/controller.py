@@ -6,20 +6,30 @@ from PySide6.QtWidgets import QInputDialog
 
 from hyperedit.extract_dialog import get_audio_tracks, extract_dialog
 from hyperedit.transcribe import transcribe
+from hyperedit.srt import parse_srt, PreviewSrt
 from hyperedit_gui.config import GetConfig
 from hyperedit_gui.projects import CreateProject, ReadProject
+from pathlib import Path
 
 class Controller:
     def __init__(self):
         self._current_project = None
         self._current_project_observers = []
+        self._srt_observers = []
 
     def AddProjectChangeObserver(self, observer):
         self._current_project_observers.append(observer)
 
+    def AddSrtChangeObserver(self, observer):
+        self._srt_observers.append(observer)
+
     def NotifyProjectChangeObservers(self):
         for observer in self._current_project_observers:
             observer.OnProjectChange()
+
+    def NotifySrtChangeObservers(self):
+        for observer in self._srt_observers:
+            observer.OnSrtChange()
 
     def create_project(self, video_file_path):
         
@@ -41,6 +51,10 @@ class Controller:
     def remove_project(self, project_path):
         GetConfig().RemoveRecentProject(project_path)
         GetConfig().Save()
+
+    def SelectSrt(self):
+
+        self.NotifySrtChangeObservers()
     
     def read_projects(self):
         return GetConfig().ReadRecentProjects()
@@ -93,11 +107,27 @@ class Controller:
         wav_directory = os.path.join(project_directory, "WAV")
         audio_file_path = os.path.join(wav_directory, f"{self.GetTracksBitmap()}.wav")     
         transcribe(audio_file_path, srt_file)
+        self.NotifySrtChangeObservers()
+
+    def GetSrt(self):
+        project_directory = os.path.dirname(self._current_project.project_path)
+        srt_directory = os.path.join(project_directory, "SRT")
+        srt_file = os.path.join(srt_directory, f"{self.GetTracksBitmap()}.srt")
+        return parse_srt(srt_file)
 
     def ToggleTrack(self, index, state):
         self._current_project.tracks[index] = state
         self._current_project.Save()
         self.NotifyProjectChangeObservers()
+
+    def PreviewSrt(self, index):
+        print(f"Previewing srt {index}")
+        srt = self.GetSrt()[int(index)-1]
+
+        video_path = Path(self._current_project.video_path)
+        PreviewSrt(video_path=str(video_path), srt=srt)
+
+
 
     def PreviewTrack(self, index):
         print(f"Previewing track {index}")

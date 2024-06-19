@@ -119,7 +119,7 @@ class TracksWindow(QWidget):
         if self.controller.AreTracksMerged():
             self.transcribe_button.setEnabled(True)
             if self.controller.AreTracksTranscribed():
-                transcribe_label_text = "Tracks already transcribed"
+                transcribe_label_text = "⚠️ Tracks already transcribed"
             else:
                 transcribe_label_text = "Ready to transcribe"
         else:
@@ -146,14 +146,14 @@ class TracksWindow(QWidget):
     def create_back_next_buttons(self):
         buttonLayout = QHBoxLayout()
         backButton = QPushButton('Projects', self)
-        nextButton = QPushButton('Edit SRTs', self)
+        nextButton = QPushButton('SRTs', self)
 
         buttonLayout.addWidget(backButton)
         buttonLayout.addStretch(1)
         buttonLayout.addWidget(nextButton)
 
         backButton.clicked.connect(lambda: self.parent().setCurrentIndex(0))
-        nextButton.clicked.connect(lambda: self.parent().setCurrentIndex(2))
+        nextButton.clicked.connect(self.next_page)
 
         return buttonLayout
 
@@ -176,10 +176,15 @@ class TracksWindow(QWidget):
             if self.controller.AreTracksMerged():
                 merge_label_text = "⚠️ Tracks already merged"
         else:
-            merge_label_text = "Cannot tracks. You must select at least one track"
+            merge_label_text = "Cannot merge tracks. You must select at least one track"
             
                 
         self.merge_label.setText(merge_label_text)
+
+    def next_page(self):
+        # TODO this really shouldn't be called from here
+        self.controller.NotifySrtChangeObservers()
+        self.parent().setCurrentIndex(2)
 
     # TODO: this could take a project as arguments
     def OnProjectChange(self):
