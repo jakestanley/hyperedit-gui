@@ -31,6 +31,10 @@ class ProjectWidget(QWidget):
         pathLabel = QLabel(self.project.project_path)
         pathLabel.setStyleSheet("font-size: 12px; color: grey;")
 
+        # video path label
+        videoLabel = QLabel(self.project.video_path)
+        videoLabel.setStyleSheet("font-size: 12px; color: grey;")
+
         # Open button
         openButton = QPushButton("Open")
         openButton.setMaximumWidth(80)
@@ -44,6 +48,7 @@ class ProjectWidget(QWidget):
         # Setup layouts
         vLayout.addWidget(nameLabel)
         vLayout.addWidget(pathLabel)
+        vLayout.addWidget(videoLabel)
         hLayout.addLayout(vLayout)
         hLayout.addWidget(openButton, alignment=Qt.AlignRight)
         hLayout.addWidget(removeButton)

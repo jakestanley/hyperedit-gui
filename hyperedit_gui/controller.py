@@ -4,7 +4,7 @@ import subprocess
 
 from PySide6.QtWidgets import QInputDialog
 
-from hyperedit.extract_dialog import get_audio_tracks
+from hyperedit.extract_dialog import get_audio_tracks, extract_dialog
 from hyperedit_gui.config import GetConfig
 from hyperedit_gui.projects import CreateProject, ReadProject
 
@@ -44,11 +44,46 @@ class Controller:
     def read_projects(self):
         return GetConfig().ReadRecentProjects()
     
+    def GetTracksBitmap(self):
+        bitmap = 0
+        for index, value in enumerate(self._current_project.tracks):
+            if value:
+                bitmap |= (1 << index)
+        return bitmap
+
     def GetTracks(self):
         if self._current_project.tracks:
             return self._current_project.tracks
         self._current_project.tracks = [False for track in get_audio_tracks(self._current_project.video_path)]
         return self._current_project.tracks
+    
+    def CanMergeTracks(self):
+        if not self._current_project:
+            return False
+        return any(self._current_project.tracks)        
+    
+    def AreTracksMerged(self):
+        if not self._current_project:
+            return False
+        project_directory = os.path.dirname(self._current_project.project_path)
+        wav_directory = os.path.join(project_directory, "WAV")
+        merge_file = os.path.join(wav_directory, f"{self.GetTracksBitmap()}.wav")
+        return os.path.exists(merge_file)
+    
+    def AreTracksTranscribed(self):
+        if not self._current_project:
+            return False
+        project_directory = os.path.dirname(self._current_project.project_path)
+        srt_directory = os.path.join(project_directory, "SRT")
+        srt_file = os.path.join(srt_directory, f"{self.GetTracksBitmap()}.srt")
+        return os.path.exists(srt_file)
+    
+    def MergeTracks(self):
+        project_directory = os.path.dirname(self._current_project.project_path)
+        wav_directory = os.path.join(project_directory, "WAV")
+        merge_file = os.path.join(wav_directory, f"{self.GetTracksBitmap()}.wav")     
+        tracks = [index for index, value in enumerate(self.GetTracks()) if value]   
+        extract_dialog(self._current_project.video_path, tracks, merge_file)
 
     def ToggleTrack(self, index, state):
         self._current_project.tracks[index] = state

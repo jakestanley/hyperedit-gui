@@ -53,13 +53,6 @@ class TracksWindow(QWidget):
         self.layout.addLayout(self.create_back_next_buttons())
 
         self.populateList()
-
-    def get_tracks_bitmap(self):
-        bitmap = 0
-        for index, value in enumerate(self.tracks):
-            if value:
-                bitmap |= (1 << index)
-        return bitmap
     
     def create_tracks_groupbox(self) -> QGroupBox:
         groupbox = QGroupBox("Tracks")
@@ -85,29 +78,55 @@ class TracksWindow(QWidget):
 
     def create_merge_tracks_hlayout(self):
         hlayout = QHBoxLayout()
-        merge_button = QPushButton("Merge")
-        merge_button.setMaximumWidth(80)
-        hlayout.addWidget(merge_button)
+        self.merge_button = QPushButton("Merge")
+        self.merge_button.setMaximumWidth(80)
+        self.merge_button.setEnabled(self.controller.CanMergeTracks())
+        self.merge_button.pressed.connect(self.controller.MergeTracks)
+        hlayout.addWidget(self.merge_button)
         # merge label display warning if file already exists
-        self.merge_label = QLabel("⚠️")
+        self.merge_label = QLabel("")
         hlayout.addWidget(self.merge_label)
-        self.merge_path_line_edit = QLineEdit(f"blah{self.get_tracks_bitmap()}.wav")
-        self.merge_path_line_edit.setEnabled(False)
-        hlayout.addWidget(self.merge_path_line_edit)
+        # self.merge_path_line_edit = QLineEdit("")
+        # self.merge_path_line_edit.setEnabled(False)
+        # hlayout.addWidget(self.merge_path_line_edit)
         return hlayout
 
     def create_transcribe_hlayout(self, hlayout):
         hlayout = QHBoxLayout()
-        transcribe_button = QPushButton("Transcribe")
-        transcribe_button.setEnabled(False)
-        hlayout.addWidget(transcribe_button)
-        # transcribe label displays warning if merged audio does not exist
-        self.transcribe_label = QLabel("⚠️")
+        self.transcribe_button = QPushButton("Transcribe")
+        self.transcribe_button.setEnabled(self.controller.AreTracksMerged())
+        hlayout.addWidget(self.transcribe_button)
+        
+        transcribe_label_text = ""
+        if self.controller.AreTracksMerged():
+            if self.controller.AreTracksTranscribed():
+                transcribe_label_text = "Tracks already transcribed"
+            else:
+                transcribe_label_text = "Ready to transcribe"
+        else:
+            transcribe_label_text = "Cannot transcribe as these tracks not yet merged"
+
+        self.transcribe_label = QLabel(transcribe_label_text)
         hlayout.addWidget(self.transcribe_label)
-        self.transcribe_path_line_edit = QLineEdit(f"blah{self.get_tracks_bitmap()}.srt")
-        self.transcribe_path_line_edit.setEnabled(False)
-        hlayout.addWidget(self.transcribe_path_line_edit)
+        # self.transcribe_path_line_edit = QLineEdit("blah.srt")
+        # self.transcribe_path_line_edit.setEnabled(self.controller.AreTracksMerged())
+        # hlayout.addWidget(self.transcribe_path_line_edit)
         return hlayout
+    
+    def update_transcribe_hlayout(self):
+        transcribe_label_text = ""
+        if self.controller.AreTracksMerged():
+            self.transcribe_button.setEnabled(True)
+            if self.controller.AreTracksTranscribed():
+                transcribe_label_text = "Tracks already transcribed"
+            else:
+                self.transcribe_button.setEnabled(True)
+                transcribe_label_text = "Ready to transcribe"
+        else:
+            self.transcribe_button.setEnabled(False)
+            transcribe_label_text = "Cannot transcribe as these tracks not yet merged"
+
+        self.transcribe_label.setText(transcribe_label_text)
 
     def create_deaggress_hlayout(self):
         hlayout = QHBoxLayout()
@@ -148,12 +167,29 @@ class TracksWindow(QWidget):
             self.listWidget.addItem(listItem)
             self.listWidget.setItemWidget(listItem, trackWidget)
 
+    def update_merge_layout(self):
+        merge_label_text = ""
+        self.merge_button.setEnabled(False)
+        if self.controller.CanMergeTracks():
+            self.merge_button.setEnabled(True)
+            merge_label_text = "Ready to merge"
+            if self.controller.AreTracksMerged():
+                merge_label_text = "⚠️ Tracks already merged"
+        else:
+            merge_label_text = "Cannot tracks. You must select at least one track"
+            
+                
+        self.merge_label.setText(merge_label_text)
+
     # TODO: this could take a project as arguments
     def OnProjectChange(self):
 
         # TODO merge with tracks loaded from project. if a mismatch, notify and clear project tracks
         self.tracks = self.controller.GetTracks()
+        self.merge_button.setEnabled(True)
         self.populateList()
+        self.update_merge_layout()
+        self.update_transcribe_hlayout()
 
 
 if __name__ == "__main__":
