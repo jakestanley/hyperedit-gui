@@ -5,6 +5,7 @@ import subprocess
 from PySide6.QtWidgets import QInputDialog
 
 from hyperedit.extract_dialog import get_audio_tracks, extract_dialog
+from hyperedit.transcribe import transcribe
 from hyperedit_gui.config import GetConfig
 from hyperedit_gui.projects import CreateProject, ReadProject
 
@@ -84,6 +85,14 @@ class Controller:
         merge_file = os.path.join(wav_directory, f"{self.GetTracksBitmap()}.wav")     
         tracks = [index for index, value in enumerate(self.GetTracks()) if value]   
         extract_dialog(self._current_project.video_path, tracks, merge_file)
+
+    def TranscribeTracks(self):
+        project_directory = os.path.dirname(self._current_project.project_path)
+        srt_directory = os.path.join(project_directory, "SRT")
+        srt_file = os.path.join(srt_directory, f"{self.GetTracksBitmap()}.srt")
+        wav_directory = os.path.join(project_directory, "WAV")
+        audio_file_path = os.path.join(wav_directory, f"{self.GetTracksBitmap()}.wav")     
+        transcribe(audio_file_path, srt_file)
 
     def ToggleTrack(self, index, state):
         self._current_project.tracks[index] = state

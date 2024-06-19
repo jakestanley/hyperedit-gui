@@ -95,12 +95,13 @@ class TracksWindow(QWidget):
         hlayout = QHBoxLayout()
         self.transcribe_button = QPushButton("Transcribe")
         self.transcribe_button.setEnabled(self.controller.AreTracksMerged())
+        self.transcribe_button.clicked.connect(self.controller.TranscribeTracks)
         hlayout.addWidget(self.transcribe_button)
         
         transcribe_label_text = ""
         if self.controller.AreTracksMerged():
             if self.controller.AreTracksTranscribed():
-                transcribe_label_text = "Tracks already transcribed"
+                transcribe_label_text = "⚠️ Tracks already transcribed"
             else:
                 transcribe_label_text = "Ready to transcribe"
         else:
@@ -120,7 +121,6 @@ class TracksWindow(QWidget):
             if self.controller.AreTracksTranscribed():
                 transcribe_label_text = "Tracks already transcribed"
             else:
-                self.transcribe_button.setEnabled(True)
                 transcribe_label_text = "Ready to transcribe"
         else:
             self.transcribe_button.setEnabled(False)
