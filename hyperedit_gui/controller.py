@@ -1,5 +1,6 @@
 import os
 import json
+import subprocess
 
 from PySide6.QtWidgets import QInputDialog
 
@@ -48,6 +49,36 @@ class Controller:
 
     def PreviewTrack(self, index):
         print(f"Previewing track {index}")
+
+        ffmpeg_cmd = [
+            "ffmpeg",
+            "-y",
+            "-i", self._current_project.video_path,
+            "-map", f"0:a:{index}",
+            "-t", "10",
+            "-af", "acompressor, silenceremove=stop_periods=-1:stop_duration=0.5:stop_threshold=-50dB",
+            "-f", "wav",
+            "-",
+        ]
+
+        ffplay_cmd = [
+            "ffplay",
+            "-autoexit", "-t", "10", # to prevent ffplay continuing to read from the pipe after ffmpeg is done
+            "-nodisp",
+            "-"
+        ]
+
+        self._current_project.video_path
         # TODO stop button
         # this works in cmd
         # ffmpeg -y -i ".\2024-06-16 20-59-05.mkv" -map 0:a:1 -af "acompressor, silenceremove=stop_periods=-1:stop_duration=0.5:stop_threshold=-50dB" -f wav - | ffplay -nodisp -
+        ffmpeg_process = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
+
+        # Second command
+        ffplay_process = subprocess.Popen(ffplay_cmd, stdin=ffmpeg_process.stdout)
+
+        # Ensure the first process's output is passed to the second process
+        ffplay_process.wait()
+
+        # Get the final output
+        output, error = ffplay_process.communicate()
