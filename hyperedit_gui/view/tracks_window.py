@@ -21,12 +21,16 @@ class TrackWidget(QWidget):
         hLayout.addWidget(QLabel(f"Track {self.index}"))
         self.checkbox = QCheckBox()
         self.checkbox.setChecked(self.enabled)
+        self.checkbox.stateChanged.connect(self.toggle_track)
         hLayout.addStretch()
         hLayout.addWidget(self.checkbox, alignment=Qt.AlignRight)
         previewButton = QPushButton("Preview")
         previewButton.clicked.connect(self.preview_track)
         hLayout.addWidget(previewButton, alignment=Qt.AlignRight)
         self.setLayout(hLayout)
+
+    def toggle_track(self, state):
+        self.controller.ToggleTrack(self.index, state == Qt.Checked.value)
 
     def preview_track(self):
         self.controller.PreviewTrack(self.index)

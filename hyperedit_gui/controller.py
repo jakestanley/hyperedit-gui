@@ -45,7 +45,15 @@ class Controller:
         return GetConfig().ReadRecentProjects()
     
     def GetTracks(self):
-        return [False for track in get_audio_tracks(self._current_project.video_path)]
+        if self._current_project.tracks:
+            return self._current_project.tracks
+        self._current_project.tracks = [False for track in get_audio_tracks(self._current_project.video_path)]
+        return self._current_project.tracks
+
+    def ToggleTrack(self, index, state):
+        self._current_project.tracks[index] = state
+        self._current_project.Save()
+        self.NotifyProjectChangeObservers()
 
     def PreviewTrack(self, index):
         print(f"Previewing track {index}")

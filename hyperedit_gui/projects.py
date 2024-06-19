@@ -8,16 +8,22 @@ _MAX_PROJECTS = 10
 
 _KEY_PROJECT_NAME="name"
 _KEY_VIDEO_FILE="video_file"
+_KEY_TRACKS="tracks"
 
 class Project:
-    def __init__(self, name, project_path, video_path) -> None:
+    def __init__(self, name, project_path, video_path, tracks=None) -> None:
         self.name = name
         self.project_path = project_path
         self.video_path = video_path
+        self.tracks = tracks
 
     def Save(self):
-        print("Saving project (not yet implemented)")
-        pass
+        with open(self.project_path, "w") as project_file:
+            config = {}
+            config[_KEY_PROJECT_NAME] = self.name
+            config[_KEY_VIDEO_FILE] = self.video_path
+            config[_KEY_TRACKS] = self.tracks
+            json.dump(config, project_file, indent=4)
 
 class RecentProjects:
     def __init__(self, projects=[]):
@@ -73,10 +79,10 @@ def CreateProject(video_file_path) -> Project:
         project["project_path"] = project_file_path
         project[_KEY_VIDEO_FILE] = video_file_path
         project[_KEY_PROJECT_NAME] = project_name
-        # project["tracks"] = self.tracks
+        project[_KEY_TRACKS] = None
         json.dump(project, project_file, indent=4)
 
-        return Project(project_name, project_file_path, video_file_path)
+        return Project(project_name, project_file_path, video_file_path, None)
 
     
 
@@ -84,9 +90,9 @@ def ReadProject(project_path) -> Project:
     try:
         with open(project_path, 'r') as project_file:
             project = json.load(project_file)
-            return Project(project.get(_KEY_PROJECT_NAME, "<NO NAME>"), project_path, project.get(_KEY_VIDEO_FILE, "missing"))
+            return Project(project.get(_KEY_PROJECT_NAME, "<NO NAME>"), project_path, project.get(_KEY_VIDEO_FILE, "missing"), project.get(_KEY_TRACKS, None))
     except json.decoder.JSONDecodeError:
-        return Project("<INVALID JSON>", project_path)
+        return Project("<INVALID JSON>", project_path, None)
     except FileNotFoundError:
-        return Project("<MISSING>", project_path)
+        return Project("<MISSING>", project_path, None)
 
