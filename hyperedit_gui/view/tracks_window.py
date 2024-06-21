@@ -69,10 +69,6 @@ class TracksWindow(QWidget):
         hlayout = self.create_transcribe_hlayout(hlayout)
         vlayout.addLayout(hlayout)
 
-        # deaggress layout
-        hlayout = self.create_deaggress_hlayout()
-        vlayout.addLayout(hlayout)
-
         groupbox.setLayout(vlayout)
         return groupbox
 
@@ -127,21 +123,6 @@ class TracksWindow(QWidget):
             transcribe_label_text = "Cannot transcribe as these tracks not yet merged"
 
         self.transcribe_label.setText(transcribe_label_text)
-
-    def create_deaggress_hlayout(self):
-        hlayout = QHBoxLayout()
-        deaggress_button = QPushButton("Deaggress")
-        self.deaggress_seconds_line_edit = QLineEdit(self)
-        self.deaggress_seconds_line_edit.setText("1.0")
-        
-        # deaggress seconds validator
-        validator = QDoubleValidator(0.1, 60.0, 1, self)
-        validator.setNotation(QDoubleValidator.StandardNotation)
-        self.deaggress_seconds_line_edit.setValidator(validator)
-        hlayout.addWidget(deaggress_button)
-        hlayout.addWidget(QLabel("by seconds"))
-        hlayout.addWidget(self.deaggress_seconds_line_edit)
-        return hlayout
     
     def create_back_next_buttons(self):
         buttonLayout = QHBoxLayout()

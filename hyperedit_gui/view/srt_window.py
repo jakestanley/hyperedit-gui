@@ -1,17 +1,21 @@
 import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QVBoxLayout, QPushButton, QWidget, QTableView, QStyledItemDelegate, QHBoxLayout, QLabel, QListWidgetItem, QListWidget, QGridLayout
-from PySide6.QtGui import QAction, QStandardItemModel, QStandardItem
+from PySide6.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QVBoxLayout, QPushButton, QWidget, QTableView, QStyledItemDelegate, QHBoxLayout, QLabel, QListWidgetItem, QListWidget, QGridLayout, QCheckBox, QLineEdit
+from PySide6.QtGui import QAction, QStandardItemModel, QStandardItem, QDoubleValidator, QValidator
 from PySide6.QtCore import QCoreApplication, Qt
 
 from hyperedit.srt import parse_srt
 
 from hyperedit_gui.controller import Controller
 
-_ACTION_INDEX = 3
+_COL_INDEX_ID = 0
+_COL_INDEX_CHECKED = 1
+_COL_INDEX_START = 2
+_COL_INDEX_END = 3
+_COL_INDEX_ACTION = 4
 
 # TODO this should go into hyperedit$
 class ActionPanel(QWidget):
-    def __init__(self, parent=None, id=None, controller=None):
+    def __init__(self, parent=None, id=None, enabled=True, controller=None):
         super().__init__(parent)
 
         self.id = id
@@ -33,6 +37,8 @@ class ActionPanel(QWidget):
     def revert(self):
         print(f"Reverting {self.id}")
 
+    # TODO: next deaggress, edit tree :o
+    # TODO: oh and render previews?
     def preview(self):
         print(f"Previewing {self.id}")
         self.controller.PreviewSrt(self.id)
@@ -59,20 +65,33 @@ class SrtWindow(QWidget):
 
         self.layout = QVBoxLayout(self)
 
-        self.model = QStandardItemModel(0, 4)  # 4 columns
-        self.model.setHeaderData(0, Qt.Horizontal, "ID")
-        self.model.setHeaderData(1, Qt.Horizontal, "Start")
-        self.model.setHeaderData(2, Qt.Horizontal, "End")
-        self.model.setHeaderData(_ACTION_INDEX, Qt.Horizontal, "Actions")
+        self.model = QStandardItemModel(0, 5)  # 4 columns
+        self.model.setHeaderData(_COL_INDEX_ID, Qt.Horizontal, "ID")
+        self.model.setHeaderData(_COL_INDEX_CHECKED, Qt.Horizontal, "")
+        self.model.setHeaderData(_COL_INDEX_START, Qt.Horizontal, "Start")
+        self.model.setHeaderData(_COL_INDEX_END, Qt.Horizontal, "End")
+        self.model.setHeaderData(_COL_INDEX_ACTION, Qt.Horizontal, "Actions")
 
         self.tableView = QTableView()
         self.tableView.setModel(self.model)
-        self.tableView.setColumnWidth(_ACTION_INDEX, 200)
+        self.tableView.setColumnWidth(_COL_INDEX_ACTION, 200)
 
         self.layout.addWidget(self.tableView)
+
+        # deaggress layout
+        hlayout = self.create_deaggress_hlayout()
+        self.layout.addLayout(hlayout)
+
         self.layout.addLayout(self.create_back_next_buttons())
 
         self.populateTable()
+
+    def update_deaggress(self, text):
+        if self.deaggress_validator.validate(text, 0)[0] == QValidator.Acceptable:
+            self.controller.SetDeaggressSeconds(float(self.deaggress_seconds_line_edit.text()))
+            self.deaggress_button.setEnabled(True)
+        else:
+            self.deaggress_button.setEnabled(False)
 
     def create_back_next_buttons(self):
 
@@ -87,23 +106,49 @@ class SrtWindow(QWidget):
         # nextButton.clicked.connect(lambda: self.parent().setCurrentIndex(3))
 
         return buttonLayout
+    
+    def create_deaggress_hlayout(self):
+        hlayout = QHBoxLayout()
+
+        self.deaggress_button = QPushButton("Deaggress")
+        self.deaggress_button.clicked.connect(self.controller.Deaggress)
+        self.deaggress_button.setEnabled(self.controller.GetDeaggressSeconds() > 0)
+
+        # deaggress seconds
+        self.deaggress_seconds_line_edit = QLineEdit(self)
+        self.deaggress_seconds_line_edit.setText(str(self.controller.GetDeaggressSeconds()))
+        # validator
+        self.deaggress_validator = QDoubleValidator(0.1, 60.0, 1, self)
+        self.deaggress_validator.setNotation(QDoubleValidator.StandardNotation)
+        self.deaggress_seconds_line_edit.setValidator(self.deaggress_validator)
+        self.deaggress_seconds_line_edit.textChanged.connect(lambda x: self.update_deaggress(x))
+
+        hlayout.addWidget(self.deaggress_button)
+        hlayout.addWidget(QLabel("by seconds"))
+        hlayout.addWidget(self.deaggress_seconds_line_edit)
+        return hlayout
 
     def populateTable(self):
         # self.model.clear()
+        self.model.clear()
         for e in self.srts:
             entry = SrtEntry(e)
             idItem = QStandardItem(entry.id)
             idItem.setFlags(~Qt.ItemIsEditable)
+            enabledItem = QStandardItem() # Empty, will hold the checkbox
             startItem = QStandardItem(str(entry.start_time))
             startItem.setFlags(Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable)
             endItem = QStandardItem(str(entry.end_time))
             endItem.setFlags(Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable)
             actionItem = QStandardItem()  # Empty, will hold the button
             actionItem.setFlags(~Qt.ItemIsSelectable)
-            self.model.appendRow([idItem, startItem, endItem, actionItem])
+            self.model.appendRow([idItem, enabledItem, startItem, endItem, actionItem])
 
-            actionPanel = ActionPanel(id=entry.id, controller=self.controller)
-            self.tableView.setIndexWidget(self.model.index(self.model.rowCount() - 1, _ACTION_INDEX), actionPanel)
+            enabledCheckbox = QCheckBox()
+            actionPanel = ActionPanel(id=entry.id, enabled=True, controller=self.controller)
+            current_row = self.model.rowCount() - 1
+            self.tableView.setIndexWidget(self.model.index(current_row, _COL_INDEX_CHECKED), enabledCheckbox)
+            self.tableView.setIndexWidget(self.model.index(current_row, _COL_INDEX_ACTION), actionPanel)
 
     def OnSrtChange(self):
         self.srts = self.controller.GetSrt()
