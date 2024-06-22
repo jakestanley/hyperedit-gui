@@ -15,6 +15,24 @@ _COL_INDEX_END = 3
 _COL_INDEX_ACTION = 4
 
 # TODO this should go into hyperedit$
+class EnabledCell(QWidget):
+    def __init__(self, parent=None, id=None, enabled=True, controller=None):
+        super().__init__(parent)
+
+        self.id = id
+        self.enabled = enabled
+        self.controller = controller
+
+        self.layout = QHBoxLayout(self)
+        self.layout.setContentsMargins(2, 0, 2, 0)
+        self.checkbox = QCheckBox();
+        self.checkbox.setChecked(self.enabled)
+        self.checkbox.stateChanged.connect(self.Toggle)
+        self.layout.addWidget(self.checkbox)
+
+    def Toggle(self, state):
+        self.controller.SetSrtRowEnabled(self.id, state == Qt.Checked.value)
+
 class ActionPanel(QWidget):
     def __init__(self, parent=None, id=None, enabled=True, controller=None):
         super().__init__(parent)
@@ -152,6 +170,7 @@ class SrtWindow(QWidget):
         
         row = QHBoxLayout()
         preview_checkbox = QCheckBox("Preview")
+        preview_checkbox.stateChanged.connect(self.SetRenderPreview)
         row.addWidget(preview_checkbox)
         render_layout.addLayout(row)
         
@@ -162,7 +181,6 @@ class SrtWindow(QWidget):
         row.addWidget(render_button)
 
         render_layout.addLayout(row)
-
 
         render_group_box = QGroupBox("Rendering")
         render_group_box.setLayout(render_layout)
@@ -179,6 +197,12 @@ class SrtWindow(QWidget):
         self.model.setHeaderData(_COL_INDEX_START, Qt.Horizontal, "Start")
         self.model.setHeaderData(_COL_INDEX_END, Qt.Horizontal, "End")
         self.model.setHeaderData(_COL_INDEX_ACTION, Qt.Horizontal, "Actions")
+
+    def ToggleEdit(self, id, state):
+        self.controller.ToggleEdit(id, state == Qt.Checked.value)
+
+    def SetRenderPreview(self, state):
+        self.controller.SetRenderPreview(state == Qt.Checked.value)
 
     def DeaggressZero(self):
         self.deaggress_seconds_line_edit.setText("0")
@@ -206,11 +230,10 @@ class SrtWindow(QWidget):
             actionItem.setFlags(~Qt.ItemIsSelectable)
             self.model.appendRow([idItem, enabledItem, startItem, endItem, actionItem])
 
-            enabledCheckbox = QCheckBox()
-            enabledCheckbox.setChecked(True)
+            enabledCell = EnabledCell(id=entry.id, enabled=True, controller=self.controller)
             actionPanel = ActionPanel(id=entry.id, enabled=True, controller=self.controller)
             current_row = self.model.rowCount() - 1
-            self.tableView.setIndexWidget(self.model.index(current_row, _COL_INDEX_CHECKED), enabledCheckbox)
+            self.tableView.setIndexWidget(self.model.index(current_row, _COL_INDEX_CHECKED), enabledCell)
             self.tableView.setIndexWidget(self.model.index(current_row, _COL_INDEX_ACTION), actionPanel)
             
             

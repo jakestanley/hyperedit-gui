@@ -104,19 +104,28 @@ class Controller:
         transcribe(audio_file_path, srt_file)
         self.NotifySrtChangeObservers()
 
-    def GetSrtFilePath(self, deaggress_seconds=0):
+    def GetSrtFilePath(self, deaggress_seconds=0, edits=False):
+        """
+        Get SRT file path for deaggress seconds. If edits, edit file is also returned
+        """
 
         project_directory = os.path.dirname(GetCurrentProject().project_path)
         srt_directory = os.path.join(project_directory, "SRT")
         if deaggress_seconds is 0: # no deaggressing
             srt_file_path = os.path.join(srt_directory, f"{self.GetTracksBitmap()}.srt")
+            srt_edit_path = os.path.join(srt_directory, f"{self.GetTracksBitmap()}.srt.json")
         else:
             deaggress_seconds = int(deaggress_seconds * 1000)
             srt_file_path = os.path.join(srt_directory, f"{self.GetTracksBitmap()}-d{deaggress_seconds}ms.srt")
+            srt_file_path = os.path.join(srt_directory, f"{self.GetTracksBitmap()}-d{deaggress_seconds}ms.srt.json")
+
+        if edits:
+            return srt_file_path, srt_edit_path, 
         return srt_file_path
 
     def GetSrt(self):
-        return parse_srt(self.GetSrtFilePath(self._deaggress_seconds))
+        srt_file_path = self.GetSrtFilePath(self._deaggress_seconds)
+        return parse_srt(srt_file_path)
 
     def ToggleTrack(self, index, state):
         GetCurrentProject().tracks[index] = state
@@ -131,6 +140,9 @@ class Controller:
 
         video_path = Path(GetCurrentProject().video_path)
         PreviewSrt(video_path=str(video_path), srt=srt)
+
+    def SetSrtRowEnabled(self, index, enabled):
+        print(f"Setting srt row {index} enabled to {enabled}")
 
     def SetDeaggressSeconds(self, value):
         self._deaggress_seconds = value
