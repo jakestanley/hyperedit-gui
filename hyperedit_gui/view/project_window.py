@@ -10,7 +10,7 @@ from hyperedit_gui.projects import Project
 from hyperedit_gui.controller import Controller
 from hyperedit_gui.config import GetConfig, HeConfig
 
-class ProjectWidget(QWidget):
+class RecentProjectWidget(QWidget):
     def __init__(self, project: Project, controller: Controller):
         super().__init__()
         self.project = project
@@ -87,9 +87,9 @@ class ProjectWindow(QWidget):
     def populateList(self):
 
         self.listWidget.clear()
-        for project in self.controller.read_projects():
+        for project in self.controller.ReadRecentProjects():
             listItem = QListWidgetItem(self.listWidget)
-            projectWidget = ProjectWidget(project, self.controller)
+            projectWidget = RecentProjectWidget(project, self.controller)
             listItem.setSizeHint(projectWidget.sizeHint())
             listItem.setFlags(listItem.flags() & ~Qt.ItemIsSelectable)
             self.listWidget.addItem(listItem)

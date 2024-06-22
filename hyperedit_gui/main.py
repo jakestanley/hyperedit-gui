@@ -13,8 +13,8 @@ class MainWindow(QMainWindow):
         
         self.setWindowTitle("HyperEdit")
 
-        # Set the main window's size
-        self.resize(800, 600)
+        # 4:3 default
+        self.resize(960, 720)
 
         self.stackedWidget = QStackedWidget()
         self.setCentralWidget(self.stackedWidget)

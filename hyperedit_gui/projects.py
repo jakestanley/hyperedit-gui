@@ -1,10 +1,11 @@
 import os
 import json
-from typing import List
 
 from PySide6.QtWidgets import QInputDialog
 
-_MAX_PROJECTS = 10
+from hyperedit_gui.exception.exceptions import ProjectException
+
+_PROJECT_SINGLETON = None
 
 _KEY_PROJECT_NAME="name"
 _KEY_VIDEO_FILE="video_file"
@@ -25,31 +26,12 @@ class Project:
             config[_KEY_TRACKS] = self.tracks
             json.dump(config, project_file, indent=4)
 
-class RecentProjects:
-    def __init__(self, projects=[]):
-        self.projects = projects
+def GetCurrentProject() -> Project:
+    global _PROJECT_SINGLETON
+    return _PROJECT_SINGLETON
 
-    def add_project(self, project):
-        if project in self.projects:
-            self.touch_project(project)
-        else:
-            self.projects.append(project)
-        if len(self.projects) > _MAX_PROJECTS:
-            self.projects.pop(0)
-
-    def touch_project(self, project):
-        self.projects.remove(project)
-        self.projects.append(project)
-
-    def remove_project(self, project):
-        self.projects.remove(project)
-
-    def read_projects(self):
-        return [ 
-            ReadProject(project) for project in self.projects
-        ]
-
-def CreateProject(video_file_path) -> Project:
+def CreateProject(video_file_path):
+    global _PROJECT_SINGLETON
 
     directory = os.path.dirname(video_file_path)
     basename, ext = os.path.splitext(os.path.basename(video_file_path))
@@ -74,25 +56,31 @@ def CreateProject(video_file_path) -> Project:
         os.makedirs(os.path.join(project_folder, subdir), exist_ok=True)
 
     project_file_path = os.path.join(project_folder, "project.json")
-    with open(project_file_path, "w") as project_file:
-        project = {}
-        project["project_path"] = project_file_path
-        project[_KEY_VIDEO_FILE] = video_file_path
-        project[_KEY_PROJECT_NAME] = project_name
-        project[_KEY_TRACKS] = None
-        json.dump(project, project_file, indent=4)
 
-        return Project(project_name, project_file_path, video_file_path, None)
-
-    
+    _PROJECT_SINGLETON = Project(project_name, project_file_path, video_file_path, None)
+    _PROJECT_SINGLETON.Save()
 
 def ReadProject(project_path) -> Project:
+    """
+    Read minimal project information and return. Intended for use with RecentProjects
+    """
     try:
         with open(project_path, 'r') as project_file:
-            project = json.load(project_file)
-            return Project(project.get(_KEY_PROJECT_NAME, "<NO NAME>"), project_path, project.get(_KEY_VIDEO_FILE, "missing"), project.get(_KEY_TRACKS, None))
-    except json.decoder.JSONDecodeError:
-        return Project("<INVALID JSON>", project_path, None)
-    except FileNotFoundError:
-        return Project("<MISSING>", project_path, None)
+            project_json = json.load(project_file)
+            return Project(project_json.get(_KEY_PROJECT_NAME, "<NO NAME>"), project_path, project_json.get(_KEY_VIDEO_FILE, "missing"), project_json.get(_KEY_TRACKS, None))
+    except (json.decoder.JSONDecodeError, FileNotFoundError) as e:
+        raise ProjectException(f"Project file not found: {project_path}")
 
+def LoadProject(project_path):
+    """
+    Load project into singleton instance
+    """
+    global _PROJECT_SINGLETON
+    _PROJECT_SINGLETON = None
+
+    try:
+        with open(project_path, 'r') as project_file:
+            project_json = json.load(project_file)
+            _PROJECT_SINGLETON = Project(project_json.get(_KEY_PROJECT_NAME, "<NO NAME>"), project_path, project_json.get(_KEY_VIDEO_FILE, "missing"), project_json.get(_KEY_TRACKS, None))
+    except (json.decoder.JSONDecodeError, FileNotFoundError) as e:
+        raise ProjectException(f"Project file not found: {project_path}")

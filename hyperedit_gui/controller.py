@@ -6,16 +6,16 @@ from hyperedit.transcribe import transcribe
 from hyperedit.srt import parse_srt, PreviewSrt
 from hyperedit.deaggress import deaggress
 from hyperedit_gui.config import GetConfig
-from hyperedit_gui.projects import CreateProject, ReadProject
+from hyperedit_gui.projects import CreateProject, GetCurrentProject, ReadProject, LoadProject
+from hyperedit_gui.recent_projects import RecentProjects
 from pathlib import Path
 
 class Controller:
     def __init__(self):
-        self._current_project = None
         self._deaggress_seconds = 0
-
         self._current_project_observers = []
         self._srt_observers = []
+        self._recent_projects = RecentProjects()
 
     def AddProjectChangeObserver(self, observer):
         self._current_project_observers.append(observer)
@@ -33,19 +33,17 @@ class Controller:
 
     def create_project(self, video_file_path):
         
-        project = CreateProject(video_file_path)
-        if not project:
-            print("Failed to create project")
+        try:
+            CreateProject(video_file_path)
+            GetConfig().AddRecentProject(GetCurrentProject().project_path)
+            GetConfig().Save()
+            self.NotifyProjectChangeObservers()
+        except Exception as e:
+            print(f"Failed to create project: {e}")
             return
-
-        GetConfig().AddRecentProject(project.project_path)
-        GetConfig().Save()
-
-        self._current_project = project
-        self.NotifyProjectChangeObservers()
     
     def load_project(self, project_path):
-        self._current_project = ReadProject(project_path)
+        LoadProject(project_path)
         self.NotifyProjectChangeObservers()
     
     def remove_project(self, project_path):
@@ -55,65 +53,62 @@ class Controller:
     def SelectSrt(self):
         self.NotifySrtChangeObservers()
     
-    def read_projects(self):
-        return GetConfig().ReadRecentProjects()
+    def ReadRecentProjects(self):
+        return self._recent_projects.ReadProjects()
     
     def GetTracksBitmap(self):
         bitmap = 0
-        for index, value in enumerate(self._current_project.tracks):
+        for index, value in enumerate(GetCurrentProject().tracks):
             if value:
                 bitmap |= (1 << index)
         return bitmap
 
     def GetTracks(self):
-        if self._current_project.tracks:
-            return self._current_project.tracks
-        self._current_project.tracks = [False for track in get_audio_tracks(self._current_project.video_path)]
-        return self._current_project.tracks
+        if GetCurrentProject().tracks:
+            return GetCurrentProject().tracks
+        GetCurrentProject().tracks = [False for track in get_audio_tracks(GetCurrentProject().video_path)]
+        return GetCurrentProject().tracks
     
     def CanMergeTracks(self):
-        if not self._current_project:
+        if not GetCurrentProject():
             return False
-        return any(self._current_project.tracks)        
+        return any(GetCurrentProject().tracks)        
     
     def AreTracksMerged(self):
-        if not self._current_project:
+        if not GetCurrentProject():
             return False
-        project_directory = os.path.dirname(self._current_project.project_path)
+        project_directory = os.path.dirname(GetCurrentProject().project_path)
         wav_directory = os.path.join(project_directory, "WAV")
         merge_file = os.path.join(wav_directory, f"{self.GetTracksBitmap()}.wav")
         return os.path.exists(merge_file)
     
     def AreTracksTranscribed(self):
-        if not self._current_project:
+        if not GetCurrentProject():
             return False
 
         srt_file = self.GetSrtFilePath()
         return os.path.exists(srt_file)
     
     def MergeTracks(self):
-        project_directory = os.path.dirname(self._current_project.project_path)
+        project_directory = os.path.dirname(GetCurrentProject().project_path)
         wav_directory = os.path.join(project_directory, "WAV")
         merge_file = os.path.join(wav_directory, f"{self.GetTracksBitmap()}.wav")     
         tracks = [index for index, value in enumerate(self.GetTracks()) if value]   
-        extract_dialog(self._current_project.video_path, tracks, merge_file)
+        extract_dialog(GetCurrentProject().video_path, tracks, merge_file)
 
     def TranscribeTracks(self):
-        project_directory = os.path.dirname(self._current_project.project_path)
+        project_directory = os.path.dirname(GetCurrentProject().project_path)
         srt_file = self.GetSrtFilePath()
         wav_directory = os.path.join(project_directory, "WAV")
         audio_file_path = os.path.join(wav_directory, f"{self.GetTracksBitmap()}.wav")     
         transcribe(audio_file_path, srt_file)
         self.NotifySrtChangeObservers()
 
-    def GetSrtFilePath(self, deaggress_seconds=None):
+    def GetSrtFilePath(self, deaggress_seconds=0):
 
-        if deaggress_seconds is None:
-            deaggress_seconds = self._deaggress_seconds
-
-        project_directory = os.path.dirname(self._current_project.project_path)
+        project_directory = os.path.dirname(GetCurrentProject().project_path)
         srt_directory = os.path.join(project_directory, "SRT")
-        if deaggress_seconds == 0: # no deaggressing
+        if deaggress_seconds is 0: # no deaggressing
             srt_file_path = os.path.join(srt_directory, f"{self.GetTracksBitmap()}.srt")
         else:
             deaggress_seconds = int(deaggress_seconds * 1000)
@@ -121,38 +116,46 @@ class Controller:
         return srt_file_path
 
     def GetSrt(self):
-        return parse_srt(self.GetSrtFilePath())
+        return parse_srt(self.GetSrtFilePath(self._deaggress_seconds))
 
     def ToggleTrack(self, index, state):
-        self._current_project.tracks[index] = state
-        self._current_project.Save()
+        GetCurrentProject().tracks[index] = state
+        GetCurrentProject().Save()
         self.NotifyProjectChangeObservers()
 
     def PreviewSrt(self, index):
         print(f"Previewing srt {index}")
+
+        # subtract 1 because the collection is zero indexed. this may be wrong
         srt = self.GetSrt()[int(index)-1]
 
-        video_path = Path(self._current_project.video_path)
+        video_path = Path(GetCurrentProject().video_path)
         PreviewSrt(video_path=str(video_path), srt=srt)
 
     def SetDeaggressSeconds(self, value):
-        self._next_deaggress_seconds = value
+        self._deaggress_seconds = value
+
+    def DeaggressZero(self):
+        self._deaggress_seconds = 0
+        self.NotifySrtChangeObservers()
 
     def GetDeaggressSeconds(self):
         return self._deaggress_seconds
 
-    # TODO save changes
     def Deaggress(self):
         input_path = self.GetSrtFilePath()
-        output_path = self.GetSrtFilePath(self._next_deaggress_seconds)
+        output_path = self.GetSrtFilePath(self._deaggress_seconds)
+        if input_path == output_path:
+            print("Error: input and output paths are the same")
+            return
         # TODO change deaggress to throw a named exception and handle and continue
         try:
             # TODO fix bug: deaggress and merge seems to cut off the first
-            deaggress(input_path, self._deaggress_seconds, False, output_path)
+            deaggress(input_path, self._deaggress_seconds, True, output_path)
         except Exception as e:
             print(f"Error deaggressing (possibly already exists): {e}")
         print(f"Deaggressed to {output_path}")
-        self._deaggress_seconds = self._next_deaggress_seconds
+        self._deaggress_seconds = self._deaggress_seconds
         self.NotifySrtChangeObservers()
         
 
@@ -162,7 +165,7 @@ class Controller:
         ffmpeg_cmd = [
             "ffmpeg",
             "-y",
-            "-i", self._current_project.video_path,
+            "-i", GetCurrentProject().video_path,
             "-map", f"0:a:{index}",
             "-t", "10",
             "-af", "acompressor, silenceremove=stop_periods=-1:stop_duration=0.5:stop_threshold=-50dB",
@@ -177,7 +180,7 @@ class Controller:
             "-"
         ]
 
-        self._current_project.video_path
+        GetCurrentProject().video_path
         # TODO stop button
         # this works in cmd
         # ffmpeg -y -i ".\2024-06-16 20-59-05.mkv" -map 0:a:1 -af "acompressor, silenceremove=stop_periods=-1:stop_duration=0.5:stop_threshold=-50dB" -f wav - | ffplay -nodisp -
