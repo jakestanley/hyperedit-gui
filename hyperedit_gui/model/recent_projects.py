@@ -1,5 +1,5 @@
-from hyperedit_gui.config import GetConfig
-from hyperedit_gui.projects import ReadProject
+from hyperedit_gui.model.config import GetConfig
+from hyperedit_gui.model.projects import ReadProject
 
 _MAX_PROJECTS = 10
 

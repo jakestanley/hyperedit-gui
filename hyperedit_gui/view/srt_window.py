@@ -4,9 +4,9 @@ from PySide6.QtWidgets import QApplication, QVBoxLayout, QPushButton, QWidget, Q
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QDoubleValidator, QValidator
 from PySide6.QtCore import Qt
 
-from hyperedit.srt import parse_srt
-
 from hyperedit_gui.controller import Controller
+from hyperedit_gui.model.srt import Srt, GetSrts
+
 
 _COL_INDEX_ID = 0
 _COL_INDEX_CHECKED = 1
@@ -61,24 +61,14 @@ class ActionPanel(QWidget):
     def preview(self):
         print(f"Previewing {self.id}")
         self.controller.PreviewSrt(self.id)
-    
-class SrtEntry:
-    def __init__(self, entry) -> None:
-        self.id = entry[0]
-        self.start_time = entry[1]
-        self.end_time = entry[2]
-
-    def to_primitive(self):
-        return (self.id, self.start_time, self.end_time)
 
 class SrtWindow(QWidget):
 
-    def __init__(self, parent, srts, controller=None):
+    def __init__(self, parent, controller=None):
         super().__init__(parent)
 
         self.controller = controller
         self.controller.AddSrtChangeObserver(self)
-        self.srts = srts
 
         self.layout = QVBoxLayout(self)
 
@@ -93,6 +83,7 @@ class SrtWindow(QWidget):
 
         mainLayout.addWidget(self.tableView)
         sideLayout = QVBoxLayout()
+        sideLayout.addWidget(self.create_stats_groupbox())
         sideLayout.addWidget(self.create_deaggress_groupbox())
         sideLayout.addWidget(self.create_render_groupbox())
         sideLayout.addStretch(1)
@@ -102,10 +93,7 @@ class SrtWindow(QWidget):
         mainLayout.setStretch(1, 2.5)  # 20% to the vertical layout
 
         self.layout.addLayout(mainLayout)
-
         self.layout.addLayout(self.create_back_next_buttons())
-
-        self.populateTable()
 
     def update_deaggress(self, text):
         if self.deaggress_validator.validate(text, 0)[0] == QValidator.Acceptable:
@@ -121,13 +109,26 @@ class SrtWindow(QWidget):
 
         buttonLayout.addWidget(backButton)
         buttonLayout.addStretch(1)
-        # buttonLayout.addWidget(nextButton)
 
         backButton.clicked.connect(lambda: self.parent().setCurrentIndex(1))
-        # nextButton.clicked.connect(lambda: self.parent().setCurrentIndex(3))
 
         return buttonLayout
     
+    def create_stats_groupbox(self):
+
+        stats_layout = QVBoxLayout()
+        
+        row = QHBoxLayout()
+        self.stats_label = QLabel("Minutes")
+        self.stats_line_edit = QLineEdit("0")
+        row.addWidget(self.stats_label)
+        row.addWidget(self.stats_line_edit)
+        stats_layout.addLayout(row)
+        stats_group_box = QGroupBox("Stats")
+        stats_group_box.setLayout(stats_layout)
+
+        return stats_group_box
+
     def create_deaggress_groupbox(self):
         
         deaggress_layout = QVBoxLayout()
@@ -176,8 +177,8 @@ class SrtWindow(QWidget):
         
         row = QHBoxLayout()
         render_button = QPushButton("Render")
-        # render_button.clicked.connect(self.controller.Render)
-        render_button.setEnabled(False)
+        render_button.clicked.connect(self.controller.Render)
+        render_button.setEnabled(True)
         row.addWidget(render_button)
 
         render_layout.addLayout(row)
@@ -215,22 +216,22 @@ class SrtWindow(QWidget):
         # Print the row numbers of selected rows
         selected_rows = sorted([index.row() for index in selected_indexes])
         print("Selected rows:", selected_rows)
+        # TODO must reset this value in controller when SRT changes
 
     def populateTable(self):
-        for e in self.srts:
-            entry = SrtEntry(e)
+        for entry in GetSrts():
             idItem = QStandardItem(entry.id)
             idItem.setFlags(~Qt.ItemIsEditable)
             enabledItem = QStandardItem() # Empty, will hold the checkbox
-            startItem = QStandardItem(str(entry.start_time))
+            startItem = QStandardItem(str(entry.original_start_time))
             startItem.setFlags(Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable)
-            endItem = QStandardItem(str(entry.end_time))
+            endItem = QStandardItem(str(entry.original_end_time))
             endItem.setFlags(Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable)
             actionItem = QStandardItem()  # Empty, will hold the button
             actionItem.setFlags(~Qt.ItemIsSelectable)
             self.model.appendRow([idItem, enabledItem, startItem, endItem, actionItem])
 
-            enabledCell = EnabledCell(id=entry.id, enabled=True, controller=self.controller)
+            enabledCell = EnabledCell(id=entry.id, enabled=entry.enabled, controller=self.controller)
             actionPanel = ActionPanel(id=entry.id, enabled=True, controller=self.controller)
             current_row = self.model.rowCount() - 1
             self.tableView.setIndexWidget(self.model.index(current_row, _COL_INDEX_CHECKED), enabledCell)
@@ -247,15 +248,30 @@ class SrtWindow(QWidget):
         header.setSectionResizeMode(QHeaderView.Stretch)
 
     def OnSrtChange(self):
-        self.srts = self.controller.GetSrt()
         self.resetModel()
         self.tableView.setModel(self.model)
         self.populateTable()
+        total_seconds = 0
+        # TODO: if SRT has an edit, hint as such in the table view
+        for srt in GetSrts():
+
+            # if this SRT is enabled, calculate time for it
+            if srt.enabled:
+                start_time = srt.original_start_time
+                end_time = srt.original_end_time
+                # if either start or end times have been edited, use them for the calculation
+                if srt.edited_start_time:
+                    start_time = srt.edited_start_time
+                if srt.edited_end_time:
+                    end_time = srt.edited_end_time
+                total_seconds = total_seconds + (end_time - start_time)
+        self.stats_line_edit.setText(str(total_seconds / 60).split(".")[0])
 
 if __name__ == "__main__":
+    from hyperedit_gui.model.srt import LoadSrts
     app = QApplication(sys.argv)
-    srts = parse_srt("data/test.srt")
-    window = SrtWindow(parent=None, srts=srts, controller=Controller())
+    LoadSrts("data/test.srt")
+    window = SrtWindow(parent=None, controller=Controller())
     # 4:3 default
     window.resize(960, 720)
     window.show()

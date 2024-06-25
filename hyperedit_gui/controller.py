@@ -3,11 +3,13 @@ import subprocess
 
 from hyperedit.extract_dialog import get_audio_tracks, extract_dialog
 from hyperedit.transcribe import transcribe
-from hyperedit.srt import parse_srt, PreviewSrt
+from hyperedit.srt import PreviewSrt
 from hyperedit.deaggress import deaggress
-from hyperedit_gui.config import GetConfig
-from hyperedit_gui.projects import CreateProject, GetCurrentProject, ReadProject, LoadProject
-from hyperedit_gui.recent_projects import RecentProjects
+from hyperedit.split_video import split_video
+from hyperedit_gui.model.config import GetConfig
+from hyperedit_gui.model.srt import LoadSrts, GetSrts, SaveEdits
+from hyperedit_gui.model.projects import CreateProject, GetCurrentProject, LoadProject
+from hyperedit_gui.model.recent_projects import RecentProjects
 from pathlib import Path
 
 class Controller:
@@ -15,10 +17,14 @@ class Controller:
         self._deaggress_seconds = 0
         self._current_project_observers = []
         self._srt_observers = []
+        self._merge_observers = []
         self._recent_projects = RecentProjects()
 
     def AddProjectChangeObserver(self, observer):
         self._current_project_observers.append(observer)
+
+    def AddMergeObserver(self, observer):
+        self._merge_observers.append(observer)
 
     def AddSrtChangeObserver(self, observer):
         self._srt_observers.append(observer)
@@ -26,6 +32,10 @@ class Controller:
     def NotifyProjectChangeObservers(self):
         for observer in self._current_project_observers:
             observer.OnProjectChange()
+
+    def NotifyMergeObservers(self):
+        for observer in self._merge_observers:
+            observer.OnMerge()
 
     def NotifySrtChangeObservers(self):
         for observer in self._srt_observers:
@@ -35,7 +45,7 @@ class Controller:
         
         try:
             CreateProject(video_file_path)
-            GetConfig().AddRecentProject(GetCurrentProject().project_path)
+            self._recent_projects.add_project(GetCurrentProject().project_path)
             GetConfig().Save()
             self.NotifyProjectChangeObservers()
         except Exception as e:
@@ -44,14 +54,12 @@ class Controller:
     
     def load_project(self, project_path):
         LoadProject(project_path)
+        LoadSrts(self.GetSrtFilePath())
         self.NotifyProjectChangeObservers()
     
     def remove_project(self, project_path):
         GetConfig().RemoveRecentProject(project_path)
         GetConfig().Save()
-
-    def SelectSrt(self):
-        self.NotifySrtChangeObservers()
     
     def ReadRecentProjects(self):
         return self._recent_projects.ReadProjects()
@@ -102,30 +110,24 @@ class Controller:
         wav_directory = os.path.join(project_directory, "WAV")
         audio_file_path = os.path.join(wav_directory, f"{self.GetTracksBitmap()}.wav")     
         transcribe(audio_file_path, srt_file)
+        self.NotifyTranscribeObservers()
         self.NotifySrtChangeObservers()
 
-    def GetSrtFilePath(self, deaggress_seconds=0, edits=False):
+    def GetSrtFilePath(self, deaggress_seconds=0):
         """
         Get SRT file path for deaggress seconds. If edits, edit file is also returned
         """
 
+        # TODO: this should probably be a member of Project
         project_directory = os.path.dirname(GetCurrentProject().project_path)
         srt_directory = os.path.join(project_directory, "SRT")
-        if deaggress_seconds is 0: # no deaggressing
+        if deaggress_seconds == 0: # no deaggressing
             srt_file_path = os.path.join(srt_directory, f"{self.GetTracksBitmap()}.srt")
-            srt_edit_path = os.path.join(srt_directory, f"{self.GetTracksBitmap()}.srt.json")
         else:
             deaggress_seconds = int(deaggress_seconds * 1000)
             srt_file_path = os.path.join(srt_directory, f"{self.GetTracksBitmap()}-d{deaggress_seconds}ms.srt")
-            srt_file_path = os.path.join(srt_directory, f"{self.GetTracksBitmap()}-d{deaggress_seconds}ms.srt.json")
-
-        if edits:
-            return srt_file_path, srt_edit_path, 
+ 
         return srt_file_path
-
-    def GetSrt(self):
-        srt_file_path = self.GetSrtFilePath(self._deaggress_seconds)
-        return parse_srt(srt_file_path)
 
     def ToggleTrack(self, index, state):
         GetCurrentProject().tracks[index] = state
@@ -136,23 +138,42 @@ class Controller:
         print(f"Previewing srt {index}")
 
         # subtract 1 because the collection is zero indexed. this may be wrong
-        srt = self.GetSrt()[int(index)-1]
+        srt = GetSrts()[int(index)-1]
 
         video_path = Path(GetCurrentProject().video_path)
-        PreviewSrt(video_path=str(video_path), srt=srt)
+        PreviewSrt(video_path=str(video_path), srt=srt.to_primitive())
 
     def SetSrtRowEnabled(self, index, enabled):
         print(f"Setting srt row {index} enabled to {enabled}")
+        GetSrts()[int(index)-1].enabled = enabled
+        SaveEdits(self.GetSrtFilePath(self._deaggress_seconds)) # inefficient
 
     def SetDeaggressSeconds(self, value):
         self._deaggress_seconds = value
 
     def DeaggressZero(self):
+        if self._deaggress_seconds == 0:
+            return
         self._deaggress_seconds = 0
+        LoadSrts(self.GetSrtFilePath())
         self.NotifySrtChangeObservers()
 
     def GetDeaggressSeconds(self):
         return self._deaggress_seconds
+
+    def Render(self):
+
+        project_directory = os.path.dirname(GetCurrentProject().project_path)
+        srt_directory = os.path.join(project_directory, "CLIP")
+
+        split_video(srt_file_path=self.GetSrtFilePath(self._deaggress_seconds),
+                    video_file_path=GetCurrentProject().video_path,
+                    output_directory=srt_directory,
+                    preview=True, # TODO use value from preview checkbox
+                    overwrite=False,
+                    range=None,
+                    gpu="nvidia"
+        )
 
     def Deaggress(self):
         input_path = self.GetSrtFilePath()
@@ -167,7 +188,7 @@ class Controller:
         except Exception as e:
             print(f"Error deaggressing (possibly already exists): {e}")
         print(f"Deaggressed to {output_path}")
-        self._deaggress_seconds = self._deaggress_seconds
+        LoadSrts(output_path)
         self.NotifySrtChangeObservers()
         
 

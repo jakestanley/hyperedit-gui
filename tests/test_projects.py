@@ -1,6 +1,6 @@
 import unittest
 
-from hyperedit_gui.projects import RecentProjects
+from hyperedit_gui.model.projects import RecentProjects
 
 class RecentProjectsTest(unittest.TestCase):
 

@@ -43,6 +43,7 @@ class TracksWindow(QWidget):
         self.tracks = tracks
 
         self.controller.AddProjectChangeObserver(self)
+        self.controller.AddMergeObserver(self)
 
         # Set the main window's size
         self.resize(600, 480)
@@ -166,6 +167,10 @@ class TracksWindow(QWidget):
         # TODO this really shouldn't be called from here
         self.controller.NotifySrtChangeObservers()
         self.parent().setCurrentIndex(2)
+
+    def OnMerge(self):
+        self.update_merge_layout()
+        self.update_transcribe_hlayout()
 
     # TODO: this could take a project as arguments
     def OnProjectChange(self):

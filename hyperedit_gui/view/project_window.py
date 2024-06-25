@@ -6,9 +6,9 @@ from PySide6.QtWidgets import QApplication, QVBoxLayout, QPushButton, \
 
 from PySide6.QtCore import Qt
 
-from hyperedit_gui.projects import Project
+from hyperedit_gui.model.projects import Project
 from hyperedit_gui.controller import Controller
-from hyperedit_gui.config import GetConfig, HeConfig
+from hyperedit_gui.model.config import GetConfig, HeConfig
 
 class RecentProjectWidget(QWidget):
     def __init__(self, project: Project, controller: Controller):

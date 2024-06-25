@@ -21,7 +21,7 @@ class MainWindow(QMainWindow):
 
         self.projectView = ProjectWindow(self.stackedWidget, controller)
         self.tracksView = TracksWindow(self.stackedWidget, [], controller)
-        self.srtView = SrtWindow(self.stackedWidget, [], controller)
+        self.srtView = SrtWindow(self.stackedWidget, controller)
 
         self.stackedWidget.addWidget(self.projectView)
         self.stackedWidget.addWidget(self.tracksView)
