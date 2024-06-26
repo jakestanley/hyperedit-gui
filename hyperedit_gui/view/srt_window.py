@@ -208,7 +208,7 @@ class SrtWindow(QWidget):
 
         row = QHBoxLayout()
         render_enabled_button = QPushButton("Render enabled")
-        render_enabled_button.clicked.connect(self.controller.RenderAll)
+        render_enabled_button.clicked.connect(self.controller.RenderEnabled)
         render_enabled_button.setEnabled(True)
         row.addWidget(render_enabled_button)
         render_layout.addLayout(row)
