@@ -6,7 +6,7 @@ authors = ["Jake Stanley <prudentia713@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-hyperedit = { git = "https://github.com/jakestanley/hyperedit.git", tag = "1.6.0" }
+hyperedit = { git = "https://github.com/jakestanley/hyperedit.git", branch = "develop" }
 common-py = { git = "https://github.com/jakestanley/common-py.git", branch = "main" }
 python = ">=3.9,<3.13"
 pyqt6 = "^6.7.0"
