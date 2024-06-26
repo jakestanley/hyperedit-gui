@@ -3,7 +3,7 @@ import subprocess
 
 from hyperedit.extract_dialog import get_audio_tracks, extract_dialog
 from hyperedit.transcribe import transcribe
-from hyperedit.srt import PreviewSrt
+from hyperedit.srt import PreviewSrt, GetPrimitiveSrtListHash
 from hyperedit.deaggress import deaggress
 from hyperedit.split_video import split_video
 from hyperedit_gui.model.config import GetConfig
@@ -15,6 +15,7 @@ from pathlib import Path
 class Controller:
     def __init__(self):
         self._deaggress_seconds = 0
+        self._selected_rows = []
         self._current_project_observers = []
         self._srt_observers = []
         self._merge_observers = []
@@ -158,15 +159,34 @@ class Controller:
         LoadSrts(self.GetSrtFilePath())
         self.NotifySrtChangeObservers()
 
+    def SetSelectedSrtRows(self, selected_rows):
+        self._selected_rows = selected_rows
+
+    def _SetSelectedEnabled(self, enabled):
+        for row in self._selected_rows:
+            GetSrts()[int(row)].enabled = enabled
+        print(f"Computed hash for enabled SRTs: {GetPrimitiveSrtListHash([srt.to_primitive() for srt in GetSrts() if srt.enabled])}")
+
+    def EnableSelected(self):
+        self._SetSelectedEnabled(True)
+        self.NotifySrtChangeObservers()
+
+    def DisableSelected(self):
+        self._SetSelectedEnabled(False)
+        self.NotifySrtChangeObservers()
+
     def GetDeaggressSeconds(self):
         return self._deaggress_seconds
-
+# TODO: deaggress or merge must ignore disabled clips
+# TODO: render with deaggress option
     def Render(self):
 
         project_directory = os.path.dirname(GetCurrentProject().project_path)
         srt_directory = os.path.join(project_directory, "CLIP")
 
-        split_video(srt_file_path=self.GetSrtFilePath(self._deaggress_seconds),
+        # split_video(srt_file_path=self.GetSrtFilePath(self._deaggress_seconds),
+        split_video(srt_file_path=None,
+                    srts=[srt.to_primitive() for srt in GetSrts() if srt.enabled],
                     video_file_path=GetCurrentProject().video_path,
                     output_directory=srt_directory,
                     preview=True, # TODO use value from preview checkbox

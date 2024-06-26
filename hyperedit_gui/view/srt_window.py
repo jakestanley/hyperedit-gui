@@ -85,6 +85,7 @@ class SrtWindow(QWidget):
         sideLayout = QVBoxLayout()
         sideLayout.addWidget(self.create_stats_groupbox())
         sideLayout.addWidget(self.create_deaggress_groupbox())
+        sideLayout.addWidget(self.create_multiselect_groupbox())
         sideLayout.addWidget(self.create_render_groupbox())
         sideLayout.addStretch(1)
         mainLayout.addLayout(sideLayout)
@@ -165,6 +166,24 @@ class SrtWindow(QWidget):
         
         return deaggress_group_box
     
+    def create_multiselect_groupbox(self):
+
+        multiselect_layout = QVBoxLayout()
+
+        enable_button = QPushButton("Enable")
+        disable_button = QPushButton("Disable")
+
+        enable_button.clicked.connect(self.controller.EnableSelected)
+        disable_button.clicked.connect(self.controller.DisableSelected)
+
+        multiselect_layout.addWidget(enable_button)
+        multiselect_layout.addWidget(disable_button)
+
+        multiselect_group_box = QGroupBox("Multi-select")
+        multiselect_group_box.setLayout(multiselect_layout)
+
+        return multiselect_group_box
+
     def create_render_groupbox(self):
         
         render_layout = QVBoxLayout()
@@ -216,6 +235,7 @@ class SrtWindow(QWidget):
         # Print the row numbers of selected rows
         selected_rows = sorted([index.row() for index in selected_indexes])
         print("Selected rows:", selected_rows)
+        self.controller.SetSelectedSrtRows(selected_rows)
         # TODO must reset this value in controller when SRT changes
 
     def populateTable(self):
