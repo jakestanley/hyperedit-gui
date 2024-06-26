@@ -20,7 +20,16 @@ class Srt:
         self.enabled = True
 
     def to_primitive(self):
-        return (self.id, self.original_start_time, self.original_end_time, self.text)
+        if self.edited_start_time:
+            start_time = self.edited_start_time
+        else:
+            start_time = self.original_start_time
+
+        if self.edited_end_time:
+            end_time = self.edited_end_time
+        else:
+            end_time = self.original_end_time
+        return (self.id, start_time, end_time, self.text)
     
     def to_edit_json(self):
         json = {}
