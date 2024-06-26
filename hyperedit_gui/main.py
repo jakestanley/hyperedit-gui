@@ -27,9 +27,12 @@ class MainWindow(QMainWindow):
         self.stackedWidget.addWidget(self.tracksView)
         self.stackedWidget.addWidget(self.srtView)
 
-if __name__ == "__main__":
+def start():
     app = QApplication(sys.argv)
     controller = Controller()
     mainWindow = MainWindow(controller)
     mainWindow.show()
     sys.exit(app.exec())
+
+if __name__ == "__main__":
+    start()
