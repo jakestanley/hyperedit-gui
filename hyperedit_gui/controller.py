@@ -100,14 +100,15 @@ class Controller:
         srt_file = self.GetSrtFilePath()
         return os.path.exists(srt_file)
     
-    def MergeTracks(self):
+    def MergeTracks(self): # TODO: fix bug where transcribe button is not automatically enabled when merge complete
         project_directory = os.path.dirname(GetCurrentProject().project_path)
         wav_directory = os.path.join(project_directory, "WAV")
         merge_file = os.path.join(wav_directory, f"{self.GetTracksBitmap()}.wav")     
         tracks = [index for index, value in enumerate(self.GetTracks()) if value]   
         extract_dialog(GetCurrentProject().video_path, tracks, merge_file)
 
-    def TranscribeTracks(self):
+    def TranscribeTracks(self): # TODO: fix bug where SRTs are not automatically selected when transcribe complete (similar to above)
+                                #   workaround is to reload the project
         project_directory = os.path.dirname(GetCurrentProject().project_path)
         srt_file = self.GetSrtFilePath()
         wav_directory = os.path.join(project_directory, "WAV")
@@ -144,7 +145,7 @@ class Controller:
         srt = GetSrts()[int(index)-1]
 
         video_path = Path(GetCurrentProject().video_path)
-        PreviewSrt(video_path=str(video_path), srt=srt.to_primitive())
+        PreviewSrt(video_path=str(video_path), srt=srt.to_primitive(), player='mplayer') # TODO: apparently mplayer supports the -fixed-vo option. this could be useful https://stackoverflow.com/a/67270126
 
     def SetSrtRowEnabled(self, index, enabled):
         print(f"Setting srt row {index} enabled to {enabled}")
@@ -190,7 +191,7 @@ class Controller:
 
 
 
-    def _Render(self, srts):
+    def _Render(self, srts): # TODO: if any clips are corrupt, this breaks. this can be caused by stopping the app mid split
 
         if len(srts) == 0:
             print("No SRTs to render")
@@ -207,7 +208,7 @@ class Controller:
                     preview=self._render_preview,
                     overwrite=False,
                     range=None,
-                    gpu="nvidia"
+                    gpu="apple"
         )
         if self._play_after_render:
             subprocess.run(["ffplay", final_output])
@@ -215,7 +216,7 @@ class Controller:
     def RenderAll(self):
         self._Render([srt.to_primitive() for srt in GetSrts()])
 
-    def RenderEnabled(self):
+    def RenderEnabled(self): # TODO do not re-concatenate if file with hash exists, i.e replaying a render
         self._Render([srt.to_primitive() for srt in GetSrts() if srt.enabled])
 
     def RenderEnabledSelection(self):
