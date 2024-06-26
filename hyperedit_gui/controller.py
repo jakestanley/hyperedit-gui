@@ -145,7 +145,7 @@ class Controller:
         srt = GetSrts()[int(index)-1]
 
         video_path = Path(GetCurrentProject().video_path)
-        PreviewSrt(video_path=str(video_path), srt=srt.to_primitive(), player='mpv') # TODO: apparently mplayer supports the -fixed-vo option. this could be useful https://stackoverflow.com/a/67270126
+        PreviewSrt(video_path=str(video_path), srt=srt.to_primitive(), player='mpv')
 
     def SetSrtRowEnabled(self, index, enabled):
         print(f"Setting srt row {index} enabled to {enabled}")
