@@ -190,16 +190,34 @@ class SrtWindow(QWidget):
         
         row = QHBoxLayout()
         preview_checkbox = QCheckBox("Preview")
-        preview_checkbox.stateChanged.connect(self.SetRenderPreview)
+        preview_checkbox.setChecked(True) # default (for now)
+        preview_checkbox.stateChanged.connect(lambda s: self.controller.SetRenderPreview(s == Qt.Checked.value))
         row.addWidget(preview_checkbox)
+
+        play_after_render_checkbox = QCheckBox("Play after render")
+        play_after_render_checkbox.stateChanged.connect(lambda s: self.controller.SetPlayAfterRender(s == Qt.Checked.value))
+        row.addWidget(play_after_render_checkbox)
         render_layout.addLayout(row)
         
         row = QHBoxLayout()
-        render_button = QPushButton("Render")
-        render_button.clicked.connect(self.controller.Render)
-        render_button.setEnabled(True)
-        row.addWidget(render_button)
+        render_all_button = QPushButton("Render all")
+        render_all_button.clicked.connect(self.controller.RenderAll)
+        render_all_button.setEnabled(True)
+        row.addWidget(render_all_button)
+        render_layout.addLayout(row)
 
+        row = QHBoxLayout()
+        render_enabled_button = QPushButton("Render enabled")
+        render_enabled_button.clicked.connect(self.controller.RenderAll)
+        render_enabled_button.setEnabled(True)
+        row.addWidget(render_enabled_button)
+        render_layout.addLayout(row)
+
+        row = QHBoxLayout()
+        self.render_selection_button = QPushButton("Render enabled selection")
+        self.render_selection_button.clicked.connect(self.controller.RenderEnabledSelection)
+        self.render_selection_button.setEnabled(True) # TODO make this conditional programmatically based on selection
+        row.addWidget(self.render_selection_button)
         render_layout.addLayout(row)
 
         render_group_box = QGroupBox("Rendering")
@@ -220,9 +238,6 @@ class SrtWindow(QWidget):
 
     def ToggleEdit(self, id, state):
         self.controller.ToggleEdit(id, state == Qt.Checked.value)
-
-    def SetRenderPreview(self, state):
-        self.controller.SetRenderPreview(state == Qt.Checked.value)
 
     def DeaggressZero(self):
         self.deaggress_seconds_line_edit.setText("0")

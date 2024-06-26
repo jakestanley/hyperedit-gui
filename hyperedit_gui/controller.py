@@ -19,6 +19,8 @@ class Controller:
         self._current_project_observers = []
         self._srt_observers = []
         self._merge_observers = []
+        self._play_after_render = False # TODO: store in config?
+        self._render_preview = True # TODO: store in project
         self._recent_projects = RecentProjects()
 
     def AddProjectChangeObserver(self, observer):
@@ -175,25 +177,55 @@ class Controller:
         self._SetSelectedEnabled(False)
         self.NotifySrtChangeObservers()
 
+    def SetRenderPreview(self, enabled):
+        self._render_preview = enabled
+
+    def SetPlayAfterRender(self, enabled):
+        self._play_after_render = enabled
+
     def GetDeaggressSeconds(self):
         return self._deaggress_seconds
 # TODO: deaggress or merge must ignore disabled clips
 # TODO: render with deaggress option
-    def Render(self):
+
+
+
+    def _Render(self, srts):
+
+        if len(srts) == 0:
+            print("No SRTs to render")
+            return
 
         project_directory = os.path.dirname(GetCurrentProject().project_path)
         srt_directory = os.path.join(project_directory, "CLIP")
 
         # split_video(srt_file_path=self.GetSrtFilePath(self._deaggress_seconds),
-        split_video(srt_file_path=None,
-                    srts=[srt.to_primitive() for srt in GetSrts() if srt.enabled],
+        final_output = split_video(srt_file_path=None,
+                    srts=srts,
                     video_file_path=GetCurrentProject().video_path,
                     output_directory=srt_directory,
-                    preview=True, # TODO use value from preview checkbox
+                    preview=self._render_preview,
                     overwrite=False,
                     range=None,
                     gpu="nvidia"
         )
+        if self._play_after_render:
+            subprocess.run(["ffplay", final_output])
+
+    def RenderAll(self):
+        self._Render([srt.to_primitive() for srt in GetSrts()])
+
+    def RenderEnabled(self):
+        self._Render([srt.to_primitive() for srt in GetSrts() if srt.enabled])
+
+    def RenderEnabledSelection(self):
+        srts = []
+        for row in self._selected_rows:
+            srt = GetSrts()[int(row)]
+            if srt.enabled:
+                srts.append(srt.to_primitive())
+
+        self._Render(srts)
 
     def Deaggress(self):
         input_path = self.GetSrtFilePath()
