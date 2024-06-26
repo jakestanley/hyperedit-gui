@@ -29,6 +29,7 @@ class Srt:
             end_time = self.edited_end_time
         else:
             end_time = self.original_end_time
+
         return (self.id, start_time, end_time, self.text)
     
     def to_edit_json(self):
@@ -42,7 +43,7 @@ def _LoadSrtEdits(srt_file_path) -> dict:
     srt_edit_path = srt_file_path + ".json"
     edits = {}
     try:
-        # read edits
+        # read edits # TODO separate named edits that can be saved/loaded separately
         with open(srt_edit_path, 'r') as srt_edit_file:
             json_edits = json.load(srt_edit_file)
             for key in json_edits.keys():

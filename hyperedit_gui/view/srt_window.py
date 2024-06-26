@@ -243,6 +243,7 @@ class SrtWindow(QWidget):
             idItem = QStandardItem(entry.id)
             idItem.setFlags(~Qt.ItemIsEditable)
             enabledItem = QStandardItem() # Empty, will hold the checkbox
+            # TODO use edit start/end times if available 
             startItem = QStandardItem(str(entry.original_start_time))
             startItem.setFlags(Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable)
             endItem = QStandardItem(str(entry.original_end_time))
@@ -250,6 +251,7 @@ class SrtWindow(QWidget):
             actionItem = QStandardItem()  # Empty, will hold the button
             actionItem.setFlags(~Qt.ItemIsSelectable)
             self.model.appendRow([idItem, enabledItem, startItem, endItem, actionItem])
+            self.model.itemChanged.connect(self.onItemChanged)
 
             enabledCell = EnabledCell(id=entry.id, enabled=entry.enabled, controller=self.controller)
             actionPanel = ActionPanel(id=entry.id, enabled=True, controller=self.controller)
@@ -266,6 +268,12 @@ class SrtWindow(QWidget):
         # self.tableView.resizeColumnsToContents()
         header = self.tableView.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.Stretch)
+
+    def onItemChanged(self, item):
+        if item.column() == _COL_INDEX_START:
+            GetSrts()[item.row()].edited_start_time = float(item.text())
+        elif item.column() == _COL_INDEX_END:
+            GetSrts()[item.row()].edited_end_time = float(item.text())
 
     def OnSrtChange(self):
         self.resetModel()
