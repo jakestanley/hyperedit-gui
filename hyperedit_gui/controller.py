@@ -1,5 +1,6 @@
 import os
 import subprocess
+import platform
 
 from hyperedit.extract_dialog import get_audio_tracks, extract_dialog
 from hyperedit.transcribe import transcribe
@@ -201,6 +202,10 @@ class Controller:
         srt_directory = os.path.join(project_directory, "CLIP")
 
         # split_video(srt_file_path=self.GetSrtFilePath(self._deaggress_seconds),
+        gpu_platform = "nvidia"
+        if platform.system() == "Darwin":
+            gpu_platform = "apple"
+        
         final_output = split_video(srt_file_path=None,
                     srts=srts,
                     video_file_path=GetCurrentProject().video_path,
@@ -208,7 +213,7 @@ class Controller:
                     preview=self._render_preview,
                     overwrite=False,
                     range=None,
-                    gpu="apple"
+                    gpu=gpu_platform
         )
         if self._play_after_render:
             subprocess.run(["ffplay", final_output])
