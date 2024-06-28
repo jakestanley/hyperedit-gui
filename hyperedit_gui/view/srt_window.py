@@ -44,7 +44,7 @@ class ActionPanel(QWidget):
         self.layout.setSpacing(2)
         self.revertButton = QPushButton("Revert")
         self.revertButton.setEnabled(False)
-        self.previewButton = QPushButton("Preview")
+        self.previewButton = QPushButton("Preview (fine)")
         self.layout.addWidget(self.revertButton)
         self.layout.addWidget(self.previewButton)
 
@@ -176,8 +176,19 @@ class SrtWindow(QWidget):
         enable_button.clicked.connect(self.controller.EnableSelected)
         disable_button.clicked.connect(self.controller.DisableSelected)
 
+        preview_disclaimer = QLabel("Rough Preview")
+
+        preview_selected_button = QPushButton("Preview selected")
+        preview_selected_button.clicked.connect(self.controller.PreviewSelected)
+
+        preview_enabled_button = QPushButton("Preview selected enabled")
+        preview_enabled_button.clicked.connect(self.controller.PreviewSelectedEnabled)
+
         multiselect_layout.addWidget(enable_button)
         multiselect_layout.addWidget(disable_button)
+        multiselect_layout.addWidget(preview_disclaimer)
+        multiselect_layout.addWidget(preview_selected_button)
+        multiselect_layout.addWidget(preview_enabled_button)
 
         multiselect_group_box = QGroupBox("Multi-select")
         multiselect_group_box.setLayout(multiselect_layout)
@@ -199,6 +210,11 @@ class SrtWindow(QWidget):
         row.addWidget(play_after_render_checkbox)
         render_layout.addLayout(row)
         
+        row = QHBoxLayout()
+        note_label = QLabel("Recommended: use render all with preview and then run that alongside as you edit")
+        row.addWidget(note_label)
+        render_layout.addLayout(row)
+
         row = QHBoxLayout()
         render_all_button = QPushButton("Render all")
         render_all_button.clicked.connect(self.controller.RenderAll)

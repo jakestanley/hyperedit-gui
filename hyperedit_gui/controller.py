@@ -1,6 +1,8 @@
 import os
 import subprocess
 import platform
+import vlc
+import time
 
 from hyperedit.extract_dialog import get_audio_tracks, extract_dialog
 from hyperedit.transcribe import transcribe
@@ -62,7 +64,7 @@ class Controller:
         self.NotifyProjectChangeObservers()
     
     def remove_project(self, project_path):
-        GetConfig().RemoveRecentProject(project_path)
+        self._recent_projects.RemoveRecentProject(project_path)
         GetConfig().Save()
     
     def ReadRecentProjects(self):
@@ -139,6 +141,46 @@ class Controller:
         GetCurrentProject().Save()
         self.NotifyProjectChangeObservers()
 
+    # TODO deduplicate
+    def PreviewSelectedEnabled(self):
+        video_path = Path(GetCurrentProject().video_path)
+        player = vlc.MediaPlayer(str(video_path))
+
+        srts = []
+        for row in self._selected_rows:
+            srt = GetSrts()[int(row)]
+            if srt.enabled:
+                srts.append(srt.to_primitive())
+
+        player.play()
+        for srt in srts:
+            start = srt[1]
+            end = srt[2]
+            duration = end - start
+            player.set_time(int(start * 1000))
+            time.sleep(duration)
+
+        player.stop()
+
+    def PreviewSelected(self):
+        video_path = Path(GetCurrentProject().video_path)
+        player = vlc.MediaPlayer(str(video_path))
+
+        srts = []
+        for row in self._selected_rows:
+            srt = GetSrts()[int(row)]
+            srts.append(srt.to_primitive())
+
+        player.play()
+        for srt in srts:
+            start = srt[1]
+            end = srt[2]
+            duration = end - start
+            player.set_time(int(start * 1000))
+            time.sleep(duration)
+
+        player.stop()
+
     def PreviewSrt(self, index):
         print(f"Previewing srt {index}")
 
@@ -146,6 +188,7 @@ class Controller:
         srt = GetSrts()[int(index)-1]
 
         video_path = Path(GetCurrentProject().video_path)
+        
         PreviewSrt(video_path=str(video_path), srt=srt.to_primitive(), player='mpv')
 
     def SetSrtRowEnabled(self, index, enabled):

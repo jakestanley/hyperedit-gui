@@ -36,12 +36,12 @@ class RecentProjects:
         ]
     
     def AddRecentProject(self, project):
-        rs = self._projects.add_project(project)
+        rs = self._projects.append(project)
         self.NotifyObservers()
         return rs
     
     def RemoveRecentProject(self, project):
-        # TODO touch_project interaction
-        rs = self._projects.remove_project(project)
+        # TODO touch_project interaction # TODO: redraw
+        rs = self._projects.remove(project)
         self.NotifyObservers()
         return rs
