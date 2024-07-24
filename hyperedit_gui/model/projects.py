@@ -11,6 +11,8 @@ _KEY_PROJECT_NAME="name"
 _KEY_VIDEO_FILE="video_file"
 _KEY_TRACKS="tracks"
 
+_PROJECT_SUBDIRECTORIES = [ "WAV", "SRT", "CLIP", "RENDER" ]
+
 class Project:
     def __init__(self, name, project_path, video_path, tracks=None) -> None:
         self.name = name
@@ -27,7 +29,11 @@ class Project:
             config[_KEY_TRACKS] = self.tracks
             json.dump(config, project_file, indent=4)
 
-def ProjectMissingProjectFile(project_path):
+def _CreateProjectSubdirectories(project_folder):
+    for subdir in _PROJECT_SUBDIRECTORIES:
+        os.makedirs(os.path.join(project_folder, subdir), exist_ok=True)
+
+def _ProjectMissingProjectFile(project_path):
     return Project("<MISSING>", project_path, "missing")
 
 def GetCurrentProject() -> Project:
@@ -55,9 +61,7 @@ def CreateProject(video_file_path):
     except FileExistsError:
         return None
     
-    subdirectories = [ "WAV", "SRT", "CLIP" ]
-    for subdir in subdirectories:
-        os.makedirs(os.path.join(project_folder, subdir), exist_ok=True)
+    _CreateProjectSubdirectories(project_folder)
 
     project_file_path = os.path.join(project_folder, "project.json")
 
@@ -71,9 +75,10 @@ def ReadProject(project_path) -> Project:
     try:
         with open(project_path, 'r') as project_file:
             project_json = json.load(project_file)
+            _CreateProjectSubdirectories(os.path.dirname(project_path))
             return Project(project_json.get(_KEY_PROJECT_NAME, "<NO NAME>"), project_path, project_json.get(_KEY_VIDEO_FILE, "missing"), project_json.get(_KEY_TRACKS, None))
     except (json.decoder.JSONDecodeError, FileNotFoundError) as e:
-        return ProjectMissingProjectFile(project_path)
+        return _ProjectMissingProjectFile(project_path)
 
 def LoadProject(project_path):
     """

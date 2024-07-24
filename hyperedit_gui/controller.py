@@ -8,7 +8,7 @@ from hyperedit.extract_dialog import get_audio_tracks, extract_dialog
 from hyperedit.transcribe import transcribe
 from hyperedit.srt import PreviewSrt, GetPrimitiveSrtListHash
 from hyperedit.deaggress import deaggress
-from hyperedit.split_video import split_video
+from hyperedit.split_video import split, concat
 from hyperedit_gui.model.config import GetConfig
 from hyperedit_gui.model.srt import LoadSrts, GetSrts, SaveEdits
 from hyperedit_gui.model.projects import CreateProject, GetCurrentProject, LoadProject
@@ -250,22 +250,33 @@ class Controller:
             return
 
         project_directory = os.path.dirname(GetCurrentProject().project_path)
-        srt_directory = os.path.join(project_directory, "CLIP")
+        clip_directory = os.path.join(project_directory, "CLIP")
+        render_directory = os.path.join(project_directory, "RENDER")
 
         # split_video(srt_file_path=self.GetSrtFilePath(self._deaggress_seconds),
         gpu_platform = "nvidia"
         if platform.system() == "Darwin":
             gpu_platform = "apple"
         
-        final_output = split_video(srt_file_path=None,
-                    srts=srts,
-                    video_file_path=GetCurrentProject().video_path,
-                    output_directory=srt_directory,
-                    preview=self._render_preview,
-                    overwrite=False,
-                    range=None,
-                    gpu=gpu_platform
+        files = split(
+            srts=srts,
+            original_video_file_path=GetCurrentProject().video_path,
+            output_directory=clip_directory,
+            preview=self._render_preview,
+            overwrite=False,
+            gpu=gpu_platform
         )
+
+        final_output = concat(
+            srts=srts,
+            original_video_file_path=GetCurrentProject().video_path,
+            output_directory=render_directory,
+            preview=False,
+            overwrite=False,
+            gpu=gpu_platform,
+            files=files
+        )
+
         if self._play_after_render:
             subprocess.run(["ffplay", final_output])
 
