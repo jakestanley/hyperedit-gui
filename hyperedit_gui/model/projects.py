@@ -19,12 +19,16 @@ class Project:
         self.tracks = tracks
 
     def Save(self):
+        # TODO validate
         with open(self.project_path, "w") as project_file:
             config = {}
             config[_KEY_PROJECT_NAME] = self.name
             config[_KEY_VIDEO_FILE] = self.video_path
             config[_KEY_TRACKS] = self.tracks
             json.dump(config, project_file, indent=4)
+
+def ProjectMissingProjectFile(project_path):
+    return Project("<MISSING>", project_path, "missing")
 
 def GetCurrentProject() -> Project:
     global _PROJECT_SINGLETON
@@ -69,7 +73,7 @@ def ReadProject(project_path) -> Project:
             project_json = json.load(project_file)
             return Project(project_json.get(_KEY_PROJECT_NAME, "<NO NAME>"), project_path, project_json.get(_KEY_VIDEO_FILE, "missing"), project_json.get(_KEY_TRACKS, None))
     except (json.decoder.JSONDecodeError, FileNotFoundError) as e:
-        raise ProjectException(f"Project file not found: {project_path}")
+        return ProjectMissingProjectFile(project_path)
 
 def LoadProject(project_path):
     """

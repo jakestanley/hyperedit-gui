@@ -39,6 +39,9 @@ class RecentProjectWidget(QWidget):
         openButton = QPushButton("Open")
         openButton.setMaximumWidth(80)
         openButton.clicked.connect(self.open_project)
+        if self.project.name == "<MISSING>":
+            openButton.setEnabled(False)
+            # TODO locate button
 
         # Remove button
         removeButton = QPushButton("Remove")
@@ -91,7 +94,8 @@ class ProjectWindow(QWidget):
             listItem = QListWidgetItem(self.listWidget)
             projectWidget = RecentProjectWidget(project, self.controller)
             listItem.setSizeHint(projectWidget.sizeHint())
-            listItem.setFlags(listItem.flags() & ~Qt.ItemIsSelectable)
+            if project.name != "<MISSING>":
+                listItem.setFlags(listItem.flags() & ~Qt.ItemIsSelectable)
             self.listWidget.addItem(listItem)
             self.listWidget.setItemWidget(listItem, projectWidget)
 
