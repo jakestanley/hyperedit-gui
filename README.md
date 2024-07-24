@@ -37,3 +37,9 @@ this project aims to provide a way to interact with hyperedit that is less cumbe
     "tracks": [1, 3]
 }
 ```
+
+## roadmap (prioritised)
+- renders need to be higher quality!!!
+- handle render subprocesses as threads, allow aborting (must cleanup)
+- progress indicators
+- clip navigation

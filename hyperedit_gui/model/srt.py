@@ -61,7 +61,12 @@ def LoadSrts(srt_file_path) -> List[Srt]:
     global _SRTS_SINGLETON
 
     # parse SRTs from SRT file
-    primitive_srts = parse_srt(srt_file_path)
+    try:
+        primitive_srts = parse_srt(srt_file_path)
+    except FileNotFoundError:
+        print(f"File not found: {srt_file_path}")
+        primitive_srts = []
+
     srts = []
     for srt in primitive_srts:
         srts.append(Srt(srt))

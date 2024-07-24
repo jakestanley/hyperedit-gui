@@ -20,6 +20,7 @@ class Controller:
         self._deaggress_seconds = 0
         self._selected_rows = []
         self._current_project_observers = []
+        self._transcribe_observers = []
         self._srt_observers = []
         self._merge_observers = []
         self._play_after_render = False # TODO: store in config?
@@ -35,6 +36,9 @@ class Controller:
     def AddSrtChangeObserver(self, observer):
         self._srt_observers.append(observer)
 
+    def AddTranscribeObserver(self, observer):
+        self._transcribe_observers.append(observer)
+
     def NotifyProjectChangeObservers(self):
         for observer in self._current_project_observers:
             observer.OnProjectChange()
@@ -42,6 +46,10 @@ class Controller:
     def NotifyMergeObservers(self):
         for observer in self._merge_observers:
             observer.OnMerge()
+
+    def NotifyTranscribeObservers(self):
+        for observer in self._transcribe_observers:
+            observer.OnTranscribe()
 
     def NotifySrtChangeObservers(self):
         for observer in self._srt_observers:
