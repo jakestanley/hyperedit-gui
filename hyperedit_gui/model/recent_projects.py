@@ -15,14 +15,6 @@ class RecentProjects:
         for observer in self.observers:
             observer.OnConfigUpdate()
 
-    def add_project(self, project):
-        if project in self._projects:
-            self.touch_project(project)
-        else:
-            self._projects.append(project)
-        if len(self._projects) > _MAX_PROJECTS:
-            self._projects.pop(0)
-
     def touch_project(self, project):
         self._projects.remove(project)
         self._projects.append(project)
@@ -36,9 +28,14 @@ class RecentProjects:
         ]
     
     def AddRecentProject(self, project):
-        rs = self._projects.append(project)
+        if project in self._projects:
+            self.touch_project(project)
+        else:
+            self._projects.append(project)
+        if len(self._projects) > _MAX_PROJECTS:
+            self._projects.pop(0)
         self.NotifyObservers()
-        return rs
+        return project
     
     def RemoveRecentProject(self, project):
         # TODO touch_project interaction # TODO: redraw

@@ -59,7 +59,7 @@ class Controller:
         
         try:
             CreateProject(video_file_path)
-            self._recent_projects.add_project(GetCurrentProject().project_path)
+            self._recent_projects.AddRecentProject(GetCurrentProject().project_path)
             GetConfig().Save()
             self.NotifyProjectChangeObservers()
         except Exception as e:
