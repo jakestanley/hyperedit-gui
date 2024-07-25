@@ -80,9 +80,14 @@ class Controller:
     
     def GetTracksBitmap(self):
         bitmap = 0
+
+        if not GetCurrentProject().tracks:
+            return bitmap
+
         for index, value in enumerate(GetCurrentProject().tracks):
             if value:
                 bitmap |= (1 << index)
+
         return bitmap
 
     def GetTracks(self):
