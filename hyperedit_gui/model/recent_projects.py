@@ -1,12 +1,17 @@
 from hyperedit_gui.model.config import GetConfig
 from hyperedit_gui.model.projects import ReadProject
 
+_RECENT_PROJECTS_SINGLETON = None
 _MAX_PROJECTS = 10
 
 class RecentProjects:
     def __init__(self):
         self._projects = GetConfig().GetRecentProjectPaths()
         self.observers = []
+
+    def _touch_project(self, project):
+        self._projects.remove(project)
+        self._projects.append(project)
 
     def AddObserver(self, observer):
         self.observers.append(observer)
@@ -15,13 +20,6 @@ class RecentProjects:
         for observer in self.observers:
             observer.OnConfigUpdate()
 
-    def touch_project(self, project):
-        self._projects.remove(project)
-        self._projects.append(project)
-
-    def remove_project(self, project):
-        self._projects.remove(project)
-
     def ReadProjects(self):
         return [ 
             ReadProject(project) for project in self._projects
@@ -29,7 +27,7 @@ class RecentProjects:
     
     def AddRecentProject(self, project):
         if project in self._projects:
-            self.touch_project(project)
+            self._touch_project(project)
         else:
             self._projects.append(project)
         if len(self._projects) > _MAX_PROJECTS:
@@ -39,6 +37,11 @@ class RecentProjects:
     
     def RemoveRecentProject(self, project):
         # TODO touch_project interaction # TODO: redraw
-        rs = self._projects.remove(project)
+        self._projects.remove(project)
         self.NotifyObservers()
-        return rs
+
+def GetRecentProjects():
+    global _RECENT_PROJECTS_SINGLETON
+    if not _RECENT_PROJECTS_SINGLETON:
+        _RECENT_PROJECTS_SINGLETON = RecentProjects()
+    return _RECENT_PROJECTS_SINGLETON

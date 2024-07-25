@@ -265,7 +265,7 @@ class SrtWindow(QWidget):
 
         # Print the row numbers of selected rows
         selected_rows = sorted([index.row() for index in selected_indexes])
-        print("Selected rows:", selected_rows)
+        print("Selected rows:", len(selected_rows))
         self.controller.SetSelectedSrtRows(selected_rows)
         # TODO must reset this value in controller when SRT changes
 

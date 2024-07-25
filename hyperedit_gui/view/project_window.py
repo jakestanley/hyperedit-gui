@@ -9,6 +9,7 @@ from PySide6.QtCore import Qt
 from hyperedit_gui.model.projects import Project
 from hyperedit_gui.controller import Controller
 from hyperedit_gui.model.config import GetConfig, HeConfig
+from hyperedit_gui.model.recent_projects import GetRecentProjects, RecentProjects
 
 class RecentProjectWidget(QWidget):
     def __init__(self, project: Project, controller: Controller):
@@ -85,6 +86,7 @@ class ProjectWindow(QWidget):
         
         self.listWidget = QListWidget()
         self.layout.addWidget(self.listWidget)
+        GetRecentProjects().AddObserver(self)
         self.populateList()
 
     def populateList(self):

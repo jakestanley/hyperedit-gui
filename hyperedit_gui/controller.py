@@ -12,7 +12,7 @@ from hyperedit.split_video import split, concat
 from hyperedit_gui.model.config import GetConfig
 from hyperedit_gui.model.srt import LoadSrts, GetSrts, SaveEdits
 from hyperedit_gui.model.projects import CreateProject, GetCurrentProject, LoadProject
-from hyperedit_gui.model.recent_projects import RecentProjects
+from hyperedit_gui.model.recent_projects import GetRecentProjects, RecentProjects
 from pathlib import Path
 
 class Controller:
@@ -25,7 +25,6 @@ class Controller:
         self._merge_observers = []
         self._play_after_render = False # TODO: store in config?
         self._render_preview = True # TODO: store in project
-        self._recent_projects = RecentProjects()
 
     def AddProjectChangeObserver(self, observer):
         self._current_project_observers.append(observer)
@@ -59,7 +58,7 @@ class Controller:
         
         try:
             CreateProject(video_file_path)
-            self._recent_projects.AddRecentProject(GetCurrentProject().project_path)
+            GetRecentProjects().AddRecentProject(GetCurrentProject().project_path)
             GetConfig().Save()
             self.NotifyProjectChangeObservers()
         except Exception as e:
@@ -72,11 +71,11 @@ class Controller:
         self.NotifyProjectChangeObservers()
     
     def remove_project(self, project_path):
-        self._recent_projects.RemoveRecentProject(project_path)
+        GetRecentProjects().RemoveRecentProject(project_path)
         GetConfig().Save()
     
     def ReadRecentProjects(self):
-        return self._recent_projects.ReadProjects()
+        return GetRecentProjects().ReadProjects()
     
     def GetTracksBitmap(self):
         bitmap = 0
