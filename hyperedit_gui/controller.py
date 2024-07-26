@@ -12,7 +12,7 @@ from hyperedit.split_video import split, concat
 from hyperedit_gui.model.config import GetConfig
 from hyperedit_gui.model.srt import LoadSrts, GetSrts, SaveEdits
 from hyperedit_gui.model.projects import CreateProject, GetCurrentProject, LoadProject
-from hyperedit_gui.model.recent_projects import GetRecentProjects, RecentProjects
+from hyperedit_gui.model.recent_projects import GetRecentProjects
 from pathlib import Path
 
 class Controller:
@@ -67,15 +67,13 @@ class Controller:
     
     def load_project(self, project_path):
         LoadProject(project_path)
+        GetRecentProjects().AddRecentProject(GetCurrentProject().project_path)
         LoadSrts(self.GetSrtFilePath())
         self.NotifyProjectChangeObservers()
     
     def remove_project(self, project_path):
         GetRecentProjects().RemoveRecentProject(project_path)
         GetConfig().Save()
-    
-    def ReadRecentProjects(self):
-        return GetRecentProjects().ReadProjects()
     
     def GetTracksBitmap(self):
         bitmap = 0
@@ -220,6 +218,10 @@ class Controller:
 
     def SetSelectedSrtRows(self, selected_rows):
         self._selected_rows = selected_rows
+        texts = []
+        for index, row in enumerate(self._selected_rows):
+            texts.append((index, GetSrts()[int(row)].text))
+        return 
 
     def _SetSelectedEnabled(self, enabled):
         for row in self._selected_rows:

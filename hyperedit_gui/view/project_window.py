@@ -6,10 +6,10 @@ from PySide6.QtWidgets import QApplication, QVBoxLayout, QPushButton, \
 
 from PySide6.QtCore import Qt
 
-from hyperedit_gui.model.projects import Project
+from hyperedit_gui.model.projects import Project, GlanceRecentProjects
 from hyperedit_gui.controller import Controller
-from hyperedit_gui.model.config import GetConfig, HeConfig
-from hyperedit_gui.model.recent_projects import GetRecentProjects, RecentProjects
+from hyperedit_gui.model.config import GetConfig
+from hyperedit_gui.model.recent_projects import GetRecentProjects
 
 class RecentProjectWidget(QWidget):
     def __init__(self, project: Project, controller: Controller):
@@ -92,7 +92,7 @@ class ProjectWindow(QWidget):
     def populateList(self):
 
         self.listWidget.clear()
-        for project in self.controller.ReadRecentProjects():
+        for project in GlanceRecentProjects():
             listItem = QListWidgetItem(self.listWidget)
             projectWidget = RecentProjectWidget(project, self.controller)
             listItem.setSizeHint(projectWidget.sizeHint())
@@ -119,7 +119,7 @@ class ProjectWindow(QWidget):
         if fileName:
             self.controller.load_project(fileName)
 
-    def OnConfigUpdate(self):
+    def OnRecentProjectsUpdate(self):
         self.populateList()
 
     def OnProjectChange(self):
