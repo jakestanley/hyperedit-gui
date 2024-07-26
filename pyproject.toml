@@ -7,7 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 hyperedit = { git = "https://github.com/jakestanley/hyperedit.git", branch = "develop" }
-common-py = { git = "https://github.com/jakestanley/common-py.git", branch = "main" }
+common-py = { git = "https://github.com/jakestanley/common-py.git", tag = "0.1.1" }
 python = ">=3.9,<3.13"
 pyqt6 = "^6.7.0"
 appdirs = "^1.4.4"

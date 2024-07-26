@@ -4,6 +4,7 @@ import json
 from PySide6.QtWidgets import QInputDialog
 
 from hyperedit_gui.exception.exceptions import ProjectException
+from hyperedit_gui.model.recent_projects import GetRecentProjects
 
 _PROJECT_SINGLETON = None
 
@@ -68,7 +69,7 @@ def CreateProject(video_file_path):
     _PROJECT_SINGLETON = Project(project_name, project_file_path, video_file_path, None)
     _PROJECT_SINGLETON.Save()
 
-def ReadProject(project_path) -> Project:
+def GlanceProject(project_path) -> Project:
     """
     Read minimal project information and return. Intended for use with RecentProjects
     """
@@ -79,6 +80,11 @@ def ReadProject(project_path) -> Project:
             return Project(project_json.get(_KEY_PROJECT_NAME, "<NO NAME>"), project_path, project_json.get(_KEY_VIDEO_FILE, "missing"), project_json.get(_KEY_TRACKS, None))
     except (json.decoder.JSONDecodeError, FileNotFoundError) as e:
         return _ProjectMissingProjectFile(project_path)
+
+def GlanceRecentProjects():
+    return [ 
+        GlanceProject(project) for project in GetRecentProjects().GetRecentProjectPaths()
+    ]
 
 def LoadProject(project_path):
     """

@@ -12,7 +12,7 @@ from hyperedit.split_video import split, concat
 from hyperedit_gui.model.config import GetConfig
 from hyperedit_gui.model.srt import LoadSrts, GetSrts, SaveEdits
 from hyperedit_gui.model.projects import CreateProject, GetCurrentProject, LoadProject
-from hyperedit_gui.model.recent_projects import GetRecentProjects, RecentProjects
+from hyperedit_gui.model.recent_projects import GetRecentProjects
 from pathlib import Path
 
 class Controller:
@@ -74,9 +74,6 @@ class Controller:
     def remove_project(self, project_path):
         GetRecentProjects().RemoveRecentProject(project_path)
         GetConfig().Save()
-    
-    def ReadRecentProjects(self):
-        return GetRecentProjects().ReadProjects()
     
     def GetTracksBitmap(self):
         bitmap = 0

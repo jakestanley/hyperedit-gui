@@ -1,18 +1,18 @@
-from hyperedit_gui.model.config import GetConfig
-from hyperedit_gui.model.projects import ReadProject
+from common_py.config import Config
 
 _RECENT_PROJECTS_SINGLETON = None
-_MAX_PROJECTS = 10
+_MAX_PROJECTS = 20
 
-class RecentProjects:
+class RecentProjects(Config):
     def __init__(self):
-        self._projects = GetConfig().GetRecentProjectPaths()
+        super().__init__('hyperedit_gui', 'recent_projects')
+        self._projects = self.config["projects"]
         self.observers = []
 
-    # TODO fix recent projects. maybe use separate config file?
-    def _touch_project(self, project):
+    def TouchProject(self, project):
         self._projects.remove(project)
         self._projects.append(project)
+        self.Save()
 
     def AddObserver(self, observer):
         self.observers.append(observer)
@@ -20,26 +20,37 @@ class RecentProjects:
     def NotifyObservers(self):
         for observer in self.observers:
             observer.OnRecentProjectsUpdate()
-
-    def ReadProjects(self):
-        return [ 
-            ReadProject(project) for project in self._projects
-        ]
     
     def AddRecentProject(self, project):
         if project in self._projects:
-            self._touch_project(project)
+            self.TouchProject(project)
         else:
             self._projects.append(project)
         if len(self._projects) > _MAX_PROJECTS:
             self._projects.pop(0)
+        self.Save()
         self.NotifyObservers()
         return project
     
+    def GetRecentProjectPaths(self):
+        # because we append to a list, to have recent at the top we must 
+        #   reverse the list before returning it
+        return reversed(self._projects)
+    
     def RemoveRecentProject(self, project):
-        # TODO touch_project interaction # TODO: redraw
         self._projects.remove(project)
+        self.Save()
         self.NotifyObservers()
+
+    def _PrepareSave(self):
+        return dict(
+            projects=self._projects
+        )
+
+    def _DefaultConfig(self):
+        return dict(
+            projects=[]
+        )
 
 def GetRecentProjects():
     global _RECENT_PROJECTS_SINGLETON

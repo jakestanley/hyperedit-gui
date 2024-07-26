@@ -6,7 +6,6 @@ class HeConfig(Config):
 
     def __init__(self) -> None:
         super().__init__('hyperedit_gui')
-        self._projects = self.config["projects"]
         self.observers = []
 
     def AddObserver(self, observer):
@@ -16,18 +15,11 @@ class HeConfig(Config):
         for observer in self.observers:
             observer.OnConfigUpdate()
 
-    def GetRecentProjectPaths(self):
-        return self._projects
-
     def _PrepareSave(self):
-        return dict(
-            projects=self._projects
-        )
+        return dict()
 
     def _DefaultConfig(self):
-        return dict(
-            projects=[]
-        )
+        return dict()
     
 def GetConfig():
     global _CONFIG_SINGLETON
