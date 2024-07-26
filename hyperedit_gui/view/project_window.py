@@ -119,7 +119,7 @@ class ProjectWindow(QWidget):
         if fileName:
             self.controller.load_project(fileName)
 
-    def OnConfigUpdate(self):
+    def OnRecentProjectsUpdate(self):
         self.populateList()
 
     def OnProjectChange(self):

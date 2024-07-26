@@ -18,10 +18,6 @@ class HeConfig(Config):
 
     def GetRecentProjectPaths(self):
         return self._projects
-    
-    def SetRecentProjectPaths(self, recent_projects):
-        for project in recent_projects.GetProjects():
-            self._projects.append(project.path)
 
     def _PrepareSave(self):
         return dict(

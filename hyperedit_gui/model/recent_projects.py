@@ -9,6 +9,7 @@ class RecentProjects:
         self._projects = GetConfig().GetRecentProjectPaths()
         self.observers = []
 
+    # TODO fix recent projects. maybe use separate config file?
     def _touch_project(self, project):
         self._projects.remove(project)
         self._projects.append(project)
@@ -18,7 +19,7 @@ class RecentProjects:
 
     def NotifyObservers(self):
         for observer in self.observers:
-            observer.OnConfigUpdate()
+            observer.OnRecentProjectsUpdate()
 
     def ReadProjects(self):
         return [ 
