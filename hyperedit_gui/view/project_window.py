@@ -1,8 +1,7 @@
 import sys
 
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QPushButton, \
-    QWidget, QHBoxLayout, QLabel, QListWidgetItem, QListWidget, \
-    QFileDialog
+    QWidget, QHBoxLayout, QLabel, QListWidgetItem, QListWidget
 
 from PySide6.QtCore import Qt
 
@@ -10,6 +9,7 @@ from hyperedit_gui.model.projects import Project, GlanceRecentProjects
 from hyperedit_gui.controller import Controller
 from hyperedit_gui.model.config import GetConfig
 from hyperedit_gui.model.recent_projects import GetRecentProjects
+from hyperedit_gui.view.files import FindProjectFile, FindVideoFile
 
 class RecentProjectWidget(QWidget):
     def __init__(self, project: Project, controller: Controller):
@@ -29,20 +29,30 @@ class RecentProjectWidget(QWidget):
         nameLabel.setStyleSheet("font-size: 14px;")
 
         # Project path label
-        pathLabel = QLabel(self.project.project_path)
-        pathLabel.setStyleSheet("font-size: 12px; color: grey;")
+        self.pathLabel = QLabel(self.project.project_path)
+        if self.project.IsProjectPathValid():
+            self.pathLabel.setStyleSheet("font-size: 12px; color: grey;")
+        else:
+            self.pathLabel.setStyleSheet("font-size: 12px; color: red;")
 
         # video path label
-        videoLabel = QLabel(self.project.video_path)
-        videoLabel.setStyleSheet("font-size: 12px; color: grey;")
+        self.videoLabel = QLabel(self.project.video_path)
+        if self.project.IsVideoPathValid():
+            self.videoLabel.setStyleSheet("font-size: 12px; color: grey;")
+        else:
+            self.videoLabel.setStyleSheet("font-size: 12px; color: red;")
 
         # Open button
-        openButton = QPushButton("Open")
-        openButton.setMaximumWidth(80)
-        openButton.clicked.connect(self.open_project)
-        if self.project.name == "<MISSING>":
-            openButton.setEnabled(False)
-            # TODO locate button
+        self.openButton = QPushButton("Open")
+        self.openButton.setMaximumWidth(80)
+        self.openButton.clicked.connect(self.open_project)
+        self.openButton.setEnabled(self.project.IsValid())
+
+        # Locate
+        self.locateButton = QPushButton("Locate")
+        self.locateButton.setMaximumWidth(80)
+        self.locateButton.clicked.connect(self.locate_files)
+        self.locateButton.setEnabled(not self.project.IsValid())
 
         # Remove button
         removeButton = QPushButton("Remove")
@@ -51,10 +61,11 @@ class RecentProjectWidget(QWidget):
 
         # Setup layouts
         vLayout.addWidget(nameLabel)
-        vLayout.addWidget(pathLabel)
-        vLayout.addWidget(videoLabel)
+        vLayout.addWidget(self.pathLabel)
+        vLayout.addWidget(self.videoLabel)
         hLayout.addLayout(vLayout)
-        hLayout.addWidget(openButton, alignment=Qt.AlignRight)
+        hLayout.addWidget(self.openButton, alignment=Qt.AlignRight)
+        hLayout.addWidget(self.locateButton)
         hLayout.addWidget(removeButton)
         self.setLayout(hLayout)
 
@@ -63,6 +74,16 @@ class RecentProjectWidget(QWidget):
 
     def remove_project(self):
         self.controller.remove_project(self.project.project_path)
+
+    def locate_files(self):
+        self.project = self.controller.locate_files(self.project)
+        if self.project.IsValid():
+            self.locateButton.setEnabled(False)
+            self.openButton.setEnabled(True)
+            self.pathLabel.setStyleSheet("font-size: 12px; color: grey;")
+            self.videoLabel.setStyleSheet("font-size: 12px; color: grey;")
+            self.pathLabel.setText(self.project.project_path)
+            self.videoLabel.setText(self.project.video_path)
 
 class ProjectWindow(QWidget):
 
@@ -96,28 +117,16 @@ class ProjectWindow(QWidget):
             listItem = QListWidgetItem(self.listWidget)
             projectWidget = RecentProjectWidget(project, self.controller)
             listItem.setSizeHint(projectWidget.sizeHint())
-            if project.name != "<MISSING>":
+            if project.IsValid():
                 listItem.setFlags(listItem.flags() & ~Qt.ItemIsSelectable)
             self.listWidget.addItem(listItem)
             self.listWidget.setItemWidget(listItem, projectWidget)
 
     def newProject(self):
-        print("New project...")
-        options = QFileDialog.Options()
-        fileName, _ = QFileDialog.getOpenFileName(self,
-            "QFileDialog.getOpenFileName()", "",
-            "Video Files (*.mp4 *.avi *.mov *.mkv);;All Files (*)", options=options)
-        if fileName:
-            self.controller.create_project(fileName)
+        self.controller.create_project(FindVideoFile())
 
     def loadProject(self):
-        print("Loading project...")
-        options = QFileDialog.Options()
-        fileName, _ = QFileDialog.getOpenFileName(self,
-            "QFileDialog.getOpenFileName()", "",
-            "Video or Project Files (*.json *.mp4 *.avi *.mov *.mkv);;All Files (*)", options=options)
-        if fileName:
-            self.controller.load_project(fileName)
+        self.controller.load_project(FindProjectFile())
 
     def OnRecentProjectsUpdate(self):
         self.populateList()

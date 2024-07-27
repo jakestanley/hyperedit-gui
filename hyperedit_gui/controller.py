@@ -11,8 +11,9 @@ from hyperedit.deaggress import deaggress
 from hyperedit.split_video import split, concat
 from hyperedit_gui.model.config import GetConfig
 from hyperedit_gui.model.srt import LoadSrts, GetSrts, SaveEdits
-from hyperedit_gui.model.projects import CreateProject, GetCurrentProject, LoadProject
+from hyperedit_gui.model.projects import Project, CreateProject, GetCurrentProject, LoadProject, GlanceProject
 from hyperedit_gui.model.recent_projects import GetRecentProjects
+from hyperedit_gui.view.files import FindProjectFile, FindVideoFile
 from pathlib import Path
 
 class Controller:
@@ -74,6 +75,18 @@ class Controller:
     def remove_project(self, project_path):
         GetRecentProjects().RemoveRecentProject(project_path)
         GetConfig().Save()
+
+    def locate_files(self, project: Project):
+        if not project.IsProjectPathValid():
+            old_project_path = project.project_path
+            project.project_path = FindProjectFile(project.name)
+            project = GlanceProject(project.project_path)
+            if project.IsProjectPathValid():
+                GetRecentProjects().ReplaceRecentProject(old_project_path, project.project_path)
+        if not project.IsVideoPathValid():
+            project.video_path = FindVideoFile(project.video_path)
+        project.Save()
+        return project
     
     def GetTracksBitmap(self):
         bitmap = 0
