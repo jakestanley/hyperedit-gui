@@ -13,6 +13,7 @@ class RecentProjects(Config):
         self._projects.remove(project)
         self._projects.append(project)
         self.Save()
+        self.NotifyObservers()
 
     def AddObserver(self, observer):
         self.observers.append(observer)
@@ -39,6 +40,12 @@ class RecentProjects(Config):
     
     def RemoveRecentProject(self, project):
         self._projects.remove(project)
+        self.Save()
+        self.NotifyObservers()
+
+    def ReplaceRecentProject(self, old_project, new_project):
+        self._projects.remove(old_project)
+        self._projects.append(new_project)
         self.Save()
         self.NotifyObservers()
 

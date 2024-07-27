@@ -21,6 +21,17 @@ class Project:
         self.video_path = video_path
         self.tracks = tracks
 
+    def IsVideoPathValid(self):
+        if self.video_path is None:
+            return False
+        return os.path.isfile(self.video_path)
+    
+    def IsProjectPathValid(self):
+        return os.path.isfile(self.project_path)
+
+    def IsValid(self):
+        return self.IsProjectPathValid() and self.IsVideoPathValid()
+
     def Save(self):
         # TODO validate
         with open(self.project_path, "w") as project_file:
@@ -33,9 +44,6 @@ class Project:
 def _CreateProjectSubdirectories(project_folder):
     for subdir in _PROJECT_SUBDIRECTORIES:
         os.makedirs(os.path.join(project_folder, subdir), exist_ok=True)
-
-def _ProjectMissingProjectFile(project_path):
-    return Project("<MISSING>", project_path, "missing")
 
 def GetCurrentProject() -> Project:
     global _PROJECT_SINGLETON
@@ -57,10 +65,9 @@ def CreateProject(video_file_path):
         return False
 
     project_folder = os.path.join(directory, project_name)
-    try:
-        os.makedirs(project_folder, exist_ok=False)
-    except FileExistsError:
-        return None
+
+    # will throw an exception if already exists
+    os.makedirs(project_folder, exist_ok=False)
     
     _CreateProjectSubdirectories(project_folder)
 
@@ -73,14 +80,16 @@ def GlanceProject(project_path) -> Project:
     """
     Read minimal project information and return. Intended for use with RecentProjects
     """
+
+    project_json = {}
+    parent_folder = os.path.basename(os.path.dirname(project_path))
     try:
         with open(project_path, 'r') as project_file:
             project_json = json.load(project_file)
             _CreateProjectSubdirectories(os.path.dirname(project_path))
-            parent_folder = os.path.basename(os.path.dirname(project_path))
             return Project(project_json.get(_KEY_PROJECT_NAME, parent_folder), project_path, project_json.get(_KEY_VIDEO_FILE, "missing"), project_json.get(_KEY_TRACKS, None))
     except (json.decoder.JSONDecodeError, FileNotFoundError) as e:
-        return _ProjectMissingProjectFile(project_path)
+        return Project(parent_folder, project_path, None)
 
 def GlanceRecentProjects():
     return [ 
