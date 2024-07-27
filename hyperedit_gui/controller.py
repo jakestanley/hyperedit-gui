@@ -77,16 +77,14 @@ class Controller:
         GetConfig().Save()
 
     def locate_files(self, project: Project):
+        old_project_path = project.project_path
         if not project.IsProjectPathValid():
-            old_project_path = project.project_path
             project.project_path = FindProjectFile(project.name)
             project = GlanceProject(project.project_path)
-            if project.IsProjectPathValid():
-                GetRecentProjects().ReplaceRecentProject(old_project_path, project.project_path)
         if not project.IsVideoPathValid():
             project.video_path = FindVideoFile(project.video_path)
         project.Save()
-        return project
+        GetRecentProjects().ReplaceRecentProject(old_project_path, project.project_path)
     
     def GetTracksBitmap(self):
         bitmap = 0

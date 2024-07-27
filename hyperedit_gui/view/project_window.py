@@ -76,14 +76,8 @@ class RecentProjectWidget(QWidget):
         self.controller.remove_project(self.project.project_path)
 
     def locate_files(self):
-        self.project = self.controller.locate_files(self.project)
-        if self.project.IsValid():
-            self.locateButton.setEnabled(False)
-            self.openButton.setEnabled(True)
-            self.pathLabel.setStyleSheet("font-size: 12px; color: grey;")
-            self.videoLabel.setStyleSheet("font-size: 12px; color: grey;")
-            self.pathLabel.setText(self.project.project_path)
-            self.videoLabel.setText(self.project.video_path)
+        # this will cause this widget to be deleted and recreated
+        self.controller.locate_files(self.project)
 
 class ProjectWindow(QWidget):
 

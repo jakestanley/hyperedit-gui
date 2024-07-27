@@ -13,6 +13,7 @@ class RecentProjects(Config):
         self._projects.remove(project)
         self._projects.append(project)
         self.Save()
+        self.NotifyObservers()
 
     def AddObserver(self, observer):
         self.observers.append(observer)
