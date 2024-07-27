@@ -22,6 +22,8 @@ class Project:
         self.tracks = tracks
 
     def IsVideoPathValid(self):
+        if self.video_path is None:
+            return False
         return os.path.isfile(self.video_path)
     
     def IsProjectPathValid(self):
@@ -79,15 +81,15 @@ def GlanceProject(project_path) -> Project:
     Read minimal project information and return. Intended for use with RecentProjects
     """
 
-    with open(project_path, 'r') as project_file:
-        project_json = {}
-        parent_folder = os.path.basename(os.path.dirname(project_path))
-        try:
+    project_json = {}
+    parent_folder = os.path.basename(os.path.dirname(project_path))
+    try:
+        with open(project_path, 'r') as project_file:
             project_json = json.load(project_file)
             _CreateProjectSubdirectories(os.path.dirname(project_path))
             return Project(project_json.get(_KEY_PROJECT_NAME, parent_folder), project_path, project_json.get(_KEY_VIDEO_FILE, "missing"), project_json.get(_KEY_TRACKS, None))
-        except (json.decoder.JSONDecodeError, FileNotFoundError) as e:
-            return Project(parent_folder, project_path, None)
+    except (json.decoder.JSONDecodeError, FileNotFoundError) as e:
+        return Project(parent_folder, project_path, None)
 
 def GlanceRecentProjects():
     return [ 

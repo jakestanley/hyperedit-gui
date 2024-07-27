@@ -42,6 +42,12 @@ class RecentProjects(Config):
         self.Save()
         self.NotifyObservers()
 
+    def ReplaceRecentProject(self, old_project, new_project):
+        self._projects.remove(old_project)
+        self._projects.append(new_project)
+        self.Save()
+        self.NotifyObservers()
+
     def _PrepareSave(self):
         return dict(
             projects=self._projects

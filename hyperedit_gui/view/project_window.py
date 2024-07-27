@@ -36,7 +36,7 @@ class RecentProjectWidget(QWidget):
             self.pathLabel.setStyleSheet("font-size: 12px; color: red;")
 
         # video path label
-        self.videoLabel = QLabel(self.project.video_path)
+        self.videoLabel = QLabel(self.project.video_path if self.project.video_path else "No file available")
         if self.project.IsVideoPathValid():
             self.videoLabel.setStyleSheet("font-size: 12px; color: grey;")
         else:
