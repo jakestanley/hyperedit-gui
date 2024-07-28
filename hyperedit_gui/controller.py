@@ -303,6 +303,11 @@ class Controller:
         if self._play_after_render:
             subprocess.run(["ffplay", final_output])
 
+    def OpenRenderFolder(self):
+        project_directory = os.path.dirname(GetCurrentProject().project_path)
+        render_directory = os.path.join(project_directory, "RENDER")
+        os.startfile(render_directory)
+
     def RenderAll(self):
         self._Render([srt.to_primitive() for srt in GetSrts()])
 

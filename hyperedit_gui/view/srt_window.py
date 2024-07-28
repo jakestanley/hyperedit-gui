@@ -216,6 +216,10 @@ class SrtWindow(QWidget):
         render_layout.addLayout(row)
 
         row = QHBoxLayout()
+        open_render_folder_button = QPushButton("Open render folder")
+        open_render_folder_button.clicked.connect(self.controller.OpenRenderFolder)
+        row.addWidget(open_render_folder_button)
+
         render_all_button = QPushButton("Render all")
         render_all_button.clicked.connect(self.controller.RenderAll)
         render_all_button.setEnabled(True)
@@ -227,9 +231,7 @@ class SrtWindow(QWidget):
         render_enabled_button.clicked.connect(self.controller.RenderEnabled)
         render_enabled_button.setEnabled(True)
         row.addWidget(render_enabled_button)
-        render_layout.addLayout(row)
 
-        row = QHBoxLayout()
         self.render_selection_button = QPushButton("Render enabled selection")
         self.render_selection_button.clicked.connect(self.controller.RenderEnabledSelection)
         self.render_selection_button.setEnabled(True) # TODO make this conditional programmatically based on selection
