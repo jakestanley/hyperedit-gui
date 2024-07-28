@@ -28,6 +28,9 @@ class MainWindow(QMainWindow):
         self.stackedWidget.addWidget(self.srtView)
 
 def start():
+
+    # call a few gets to initialise
+
     app = QApplication(sys.argv)
     controller = Controller()
     mainWindow = MainWindow(controller)

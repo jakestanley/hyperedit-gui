@@ -7,6 +7,9 @@ from ffprobe import FFProbe
 from hyperedit.extract_dialog import get_audio_tracks
 from hyperedit_gui.controller import Controller
 
+from hyperedit_gui.service.project_service import GetProjectService
+from hyperedit_gui.service.tracks_service import GetTracksService
+
 class TrackWidget(QWidget):
     def __init__(self, index, enabled, controller):
         super().__init__()
@@ -42,8 +45,8 @@ class TracksWindow(QWidget):
         self.controller = controller
         self.tracks = tracks
 
-        self.controller.AddProjectChangeObserver(self)
-        self.controller.AddMergeObserver(self)
+        GetProjectService().AddObserver(self)
+        GetTracksService().AddObserver(self)
 
         # Set the main window's size
         self.resize(600, 480)
@@ -164,8 +167,6 @@ class TracksWindow(QWidget):
         self.merge_label.setText(merge_label_text)
 
     def next_page(self):
-        # TODO this really shouldn't be called from here
-        self.controller.NotifySrtChangeObservers()
         self.parent().setCurrentIndex(2)
 
     def OnMerge(self):

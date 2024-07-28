@@ -11,6 +11,8 @@ from hyperedit_gui.model.config import GetConfig
 from hyperedit_gui.model.recent_projects import GetRecentProjects
 from hyperedit_gui.view.files import FindProjectFile, FindVideoFile
 
+from hyperedit_gui.service.project_service import GetProjectService
+
 class RecentProjectWidget(QWidget):
     def __init__(self, project: Project, controller: Controller):
         super().__init__()
@@ -70,10 +72,10 @@ class RecentProjectWidget(QWidget):
         self.setLayout(hLayout)
 
     def open_project(self):
-        self.controller.load_project(self.project.project_path)
+        GetProjectService().LoadProject(self.project.project_path)
 
     def remove_project(self):
-        self.controller.remove_project(self.project.project_path)
+        GetRecentProjects().RemoveRecentProject(self.project.project_path)
 
     def locate_files(self):
         # this will cause this widget to be deleted and recreated
@@ -85,7 +87,7 @@ class ProjectWindow(QWidget):
         super().__init__(parent)
 
         self.controller = controller
-        self.controller.AddProjectChangeObserver(self)
+        GetProjectService().AddObserver(self)
         GetConfig().AddObserver(self)
 
         # Set the main window's size
@@ -117,10 +119,10 @@ class ProjectWindow(QWidget):
             self.listWidget.setItemWidget(listItem, projectWidget)
 
     def newProject(self):
-        self.controller.create_project(FindVideoFile())
+        self.controller.CreateProject(FindVideoFile())
 
     def loadProject(self):
-        self.controller.load_project(FindProjectFile())
+        self.controller.LoadProject(FindProjectFile())
 
     def OnRecentProjectsUpdate(self):
         self.populateList()

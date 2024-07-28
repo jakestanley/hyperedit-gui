@@ -5,7 +5,10 @@ from PySide6.QtGui import QStandardItemModel, QStandardItem, QDoubleValidator, Q
 from PySide6.QtCore import Qt
 
 from hyperedit_gui.controller import Controller
-from hyperedit_gui.model.srt import Srt, GetSrts
+from hyperedit_gui.model.srt import GetSrts
+
+from hyperedit_gui.controllers.edit_controller import EditController, GetEditController
+from hyperedit_gui.service.srt_service import GetSrtService
 
 
 _COL_INDEX_ID = 0
@@ -31,7 +34,7 @@ class EnabledCell(QWidget):
         self.layout.addWidget(self.checkbox)
 
     def Toggle(self, state):
-        self.controller.SetSrtRowEnabled(self.id, state == Qt.Checked.value)
+        GetEditController().SetSrtRowEnabled(self.id, state == Qt.Checked.value)
 
 class ActionPanel(QWidget):
     def __init__(self, parent=None, id=None, enabled=True, controller=None):
@@ -60,7 +63,7 @@ class ActionPanel(QWidget):
     # TODO: oh and render previews?
     def preview(self):
         print(f"Previewing {self.id}")
-        self.controller.PreviewSrt(self.id)
+        GetEditController().PreviewFine(self.id)
 
 class SrtWindow(QWidget):
 
@@ -68,7 +71,7 @@ class SrtWindow(QWidget):
         super().__init__(parent)
 
         self.controller = controller
-        self.controller.AddSrtChangeObserver(self)
+        GetSrtService().AddObserver(self)
 
         self.layout = QVBoxLayout(self)
 
@@ -87,6 +90,7 @@ class SrtWindow(QWidget):
         sideLayout.addWidget(self.create_deaggress_groupbox())
         sideLayout.addWidget(self.create_multiselect_groupbox())
         sideLayout.addWidget(self.create_render_groupbox())
+        sideLayout.addWidget(self.create_edl_groupbox())
         sideLayout.addStretch(1)
         mainLayout.addLayout(sideLayout)
 
@@ -98,7 +102,7 @@ class SrtWindow(QWidget):
 
     def update_deaggress(self, text):
         if self.deaggress_validator.validate(text, 0)[0] == QValidator.Acceptable:
-            self.controller.SetDeaggressSeconds(float(self.deaggress_seconds_line_edit.text()))
+            GetSrtService().SetDeaggressSeconds(float(self.deaggress_seconds_line_edit.text()))
             self.deaggress_button.setEnabled(True)
         else:
             self.deaggress_button.setEnabled(False)
@@ -134,12 +138,12 @@ class SrtWindow(QWidget):
         
         deaggress_layout = QVBoxLayout()
         self.deaggress_button = QPushButton("Deaggress")
-        self.deaggress_button.clicked.connect(self.controller.Deaggress)
-        self.deaggress_button.setEnabled(self.controller.GetDeaggressSeconds() > 0)
+        self.deaggress_button.clicked.connect(GetEditController().Deaggress)
+        self.deaggress_button.setEnabled(GetEditController().CanDeaggress())
 
         # deaggress seconds
         self.deaggress_seconds_line_edit = QLineEdit(self)
-        self.deaggress_seconds_line_edit.setText(str(self.controller.GetDeaggressSeconds()))
+        self.deaggress_seconds_line_edit.setText(str(GetEditController().GetDeaggressSeconds()))
         # validator
         self.deaggress_validator = QDoubleValidator(0.1, 60.0, 1, self)
         self.deaggress_validator.setNotation(QDoubleValidator.StandardNotation)
@@ -173,16 +177,16 @@ class SrtWindow(QWidget):
         enable_button = QPushButton("Enable")
         disable_button = QPushButton("Disable")
 
-        enable_button.clicked.connect(self.controller.EnableSelected)
-        disable_button.clicked.connect(self.controller.DisableSelected)
+        enable_button.clicked.connect(GetEditController().EnableSelected)
+        disable_button.clicked.connect(GetEditController().DisableSelected)
 
         preview_disclaimer = QLabel("Rough Preview")
 
         preview_selected_button = QPushButton("Preview selected")
-        preview_selected_button.clicked.connect(self.controller.PreviewSelected)
+        preview_selected_button.clicked.connect(GetEditController().PreviewSelected)
 
         preview_enabled_button = QPushButton("Preview selected enabled")
-        preview_enabled_button.clicked.connect(self.controller.PreviewSelectedEnabled)
+        preview_enabled_button.clicked.connect(GetEditController().PreviewSelectedEnabled)
 
         multiselect_layout.addWidget(enable_button)
         multiselect_layout.addWidget(disable_button)
@@ -202,11 +206,11 @@ class SrtWindow(QWidget):
         row = QHBoxLayout()
         preview_checkbox = QCheckBox("Preview")
         preview_checkbox.setChecked(True) # default (for now)
-        preview_checkbox.stateChanged.connect(lambda s: self.controller.SetRenderPreview(s == Qt.Checked.value))
+        preview_checkbox.stateChanged.connect(lambda s: GetEditController().SetRenderPreview(s == Qt.Checked.value))
         row.addWidget(preview_checkbox)
 
         play_after_render_checkbox = QCheckBox("Play after render")
-        play_after_render_checkbox.stateChanged.connect(lambda s: self.controller.SetPlayAfterRender(s == Qt.Checked.value))
+        play_after_render_checkbox.stateChanged.connect(lambda s: GetEditController().SetPlayAfterRender(s == Qt.Checked.value))
         row.addWidget(play_after_render_checkbox)
         render_layout.addLayout(row)
         
@@ -217,31 +221,47 @@ class SrtWindow(QWidget):
 
         row = QHBoxLayout()
         open_render_folder_button = QPushButton("Open render folder")
-        open_render_folder_button.clicked.connect(self.controller.OpenRenderFolder)
+        open_render_folder_button.clicked.connect(GetEditController().OpenRenderFolder)
         row.addWidget(open_render_folder_button)
 
         render_all_button = QPushButton("Render all")
-        render_all_button.clicked.connect(self.controller.RenderAll)
+        render_all_button.clicked.connect(GetEditController().RenderAll)
         render_all_button.setEnabled(True)
         row.addWidget(render_all_button)
         render_layout.addLayout(row)
 
         row = QHBoxLayout()
         render_enabled_button = QPushButton("Render enabled")
-        render_enabled_button.clicked.connect(self.controller.RenderEnabled)
+        render_enabled_button.clicked.connect(GetEditController().RenderEnabled)
         render_enabled_button.setEnabled(True)
         row.addWidget(render_enabled_button)
 
-        self.render_selection_button = QPushButton("Render enabled selection")
-        self.render_selection_button.clicked.connect(self.controller.RenderEnabledSelection)
-        self.render_selection_button.setEnabled(True) # TODO make this conditional programmatically based on selection
-        row.addWidget(self.render_selection_button)
+        self.create_edl_button = QPushButton("Render enabled selection")
+        self.create_edl_button.clicked.connect(GetEditController().RenderEnabledSelection)
+        self.create_edl_button.setEnabled(True) # TODO make this conditional programmatically based on selection
+        row.addWidget(self.create_edl_button)
         render_layout.addLayout(row)
 
         render_group_box = QGroupBox("Rendering")
         render_group_box.setLayout(render_layout)
 
         return render_group_box
+    
+    def create_edl_groupbox(self):
+        
+        edl_layout = QVBoxLayout()
+
+        row = QHBoxLayout()
+        self.create_edl_button = QPushButton("Create EDL")
+        self.create_edl_button.clicked.connect(GetEditController().CreateEdl)
+        self.create_edl_button.setEnabled(True) # TODO make this conditional programmatically based on selection
+        row.addWidget(self.create_edl_button)
+        edl_layout.addLayout(row)
+
+        edl_group_box = QGroupBox("Edit Decision Lists")
+        edl_group_box.setLayout(edl_layout)
+
+        return edl_group_box
     
     def resetModel(self):
         if self.model:
@@ -254,9 +274,6 @@ class SrtWindow(QWidget):
         self.model.setHeaderData(_COL_INDEX_END, Qt.Horizontal, "End")
         self.model.setHeaderData(_COL_INDEX_ACTION, Qt.Horizontal, "Actions")
 
-    def ToggleEdit(self, id, state):
-        self.controller.ToggleEdit(id, state == Qt.Checked.value)
-
     def DeaggressZero(self):
         self.deaggress_seconds_line_edit.setText("0")
         self.controller.DeaggressZero()
@@ -268,10 +285,10 @@ class SrtWindow(QWidget):
         # Print the row numbers of selected rows
         selected_rows = sorted([index.row() for index in selected_indexes])
         print("Selected rows:", len(selected_rows))
-        self.controller.SetSelectedSrtRows(selected_rows)
+        GetEditController().SetSelectedSrtRows(selected_rows)
         # TODO must reset this value in controller when SRT changes
 
-    def populateTable(self):
+    def populateTable(self): # TODO: Srts should be accessed through the controller
         for entry in GetSrts():
             idItem = QStandardItem(entry.id)
             idItem.setFlags(~Qt.ItemIsEditable)

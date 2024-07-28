@@ -91,6 +91,7 @@ def SaveEdits(srt_file_path):
             edits[srt.id] = srt.to_edit_json()
         srt_edit_file.write(json.dumps(edits))
 
+# TODO: move me to SrtService ?
 def GetSrts() -> List[Srt]:
     global _SRTS_SINGLETON
     if _SRTS_SINGLETON is None:

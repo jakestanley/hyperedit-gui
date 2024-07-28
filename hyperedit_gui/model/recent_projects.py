@@ -38,6 +38,7 @@ class RecentProjects(Config):
         #   reverse the list before returning it
         return reversed(self._projects)
     
+    # TODO inherit observable
     def RemoveRecentProject(self, project):
         self._projects.remove(project)
         self.Save()

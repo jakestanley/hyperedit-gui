@@ -12,7 +12,7 @@ _KEY_PROJECT_NAME="name"
 _KEY_VIDEO_FILE="video_file"
 _KEY_TRACKS="tracks"
 
-_PROJECT_SUBDIRECTORIES = [ "WAV", "SRT", "CLIP", "RENDER" ]
+_PROJECT_SUBDIRECTORIES = [ "WAV", "SRT", "CLIP", "RENDER", "EDL" ]
 
 class Project:
     def __init__(self, name, project_path, video_path, tracks=None) -> None:
