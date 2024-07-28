@@ -24,7 +24,7 @@ class RecentProjectWidget(QWidget):
         hLayout.setContentsMargins(8, 8, 8, 8)
 
         # Project name label
-        vLayout = QVBoxLayout(self)
+        vLayout = QVBoxLayout()
         nameLabel = QLabel(self.project.name)
         nameLabel.setStyleSheet("font-size: 14px;")
 
@@ -70,7 +70,7 @@ class RecentProjectWidget(QWidget):
         self.setLayout(hLayout)
 
     def open_project(self):
-        self.controller.load_project(self.project.project_path)
+        self.controller.LoadProject(self.project.project_path)
 
     def remove_project(self):
         self.controller.remove_project(self.project.project_path)
@@ -85,7 +85,6 @@ class ProjectWindow(QWidget):
         super().__init__(parent)
 
         self.controller = controller
-        self.controller.AddProjectChangeObserver(self)
         GetConfig().AddObserver(self)
 
         # Set the main window's size
@@ -117,10 +116,10 @@ class ProjectWindow(QWidget):
             self.listWidget.setItemWidget(listItem, projectWidget)
 
     def newProject(self):
-        self.controller.create_project(FindVideoFile())
+        self.controller.CreateProject(FindVideoFile())
 
     def loadProject(self):
-        self.controller.load_project(FindProjectFile())
+        self.controller.LoadProject(FindProjectFile())
 
     def OnRecentProjectsUpdate(self):
         self.populateList()
@@ -138,7 +137,7 @@ if __name__ == "__main__":
         ("Project Gamma", "/path/to/gamma")
     ]
 
-    config: HeConfig = GetConfig()
+    config = GetConfig()
     window = ProjectWindow(parent=None, controller=Controller())
     window.show()
     sys.exit(app.exec())

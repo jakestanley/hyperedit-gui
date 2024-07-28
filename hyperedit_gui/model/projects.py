@@ -11,15 +11,20 @@ _PROJECT_SINGLETON = None
 _KEY_PROJECT_NAME="name"
 _KEY_VIDEO_FILE="video_file"
 _KEY_TRACKS="tracks"
+_KEY_DEAGGRESS_SECONDS="deaggress_seconds"
 
 _PROJECT_SUBDIRECTORIES = [ "WAV", "SRT", "CLIP", "RENDER" ]
 
 class Project:
-    def __init__(self, name, project_path, video_path, tracks=None) -> None:
+    def __init__(self, name, project_path, video_path, tracks=None, deaggress_seconds=0) -> None:
         self.name = name
         self.project_path = project_path
         self.video_path = video_path
         self.tracks = tracks
+        self.deaggress_seconds = deaggress_seconds
+
+    def SetDeaggressSeconds(self, value):
+        self.deaggress_seconds = value
 
     def IsVideoPathValid(self):
         if self.video_path is None:
@@ -39,6 +44,7 @@ class Project:
             config[_KEY_PROJECT_NAME] = self.name
             config[_KEY_VIDEO_FILE] = self.video_path
             config[_KEY_TRACKS] = self.tracks
+            config[_KEY_DEAGGRESS_SECONDS] = self.deaggress_seconds
             json.dump(config, project_file, indent=4)
 
 def _CreateProjectSubdirectories(project_folder):
@@ -87,7 +93,12 @@ def GlanceProject(project_path) -> Project:
         with open(project_path, 'r') as project_file:
             project_json = json.load(project_file)
             _CreateProjectSubdirectories(os.path.dirname(project_path))
-            return Project(project_json.get(_KEY_PROJECT_NAME, parent_folder), project_path, project_json.get(_KEY_VIDEO_FILE, "missing"), project_json.get(_KEY_TRACKS, None))
+            return Project(
+                project_json.get(_KEY_PROJECT_NAME, parent_folder), 
+                project_path, 
+                project_json.get(_KEY_VIDEO_FILE, "missing"), 
+                project_json.get(_KEY_TRACKS, None),
+                project_json.get(_KEY_DEAGGRESS_SECONDS, 0))
     except (json.decoder.JSONDecodeError, FileNotFoundError) as e:
         return Project(parent_folder, project_path, None)
 

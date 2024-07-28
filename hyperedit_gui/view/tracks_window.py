@@ -42,9 +42,6 @@ class TracksWindow(QWidget):
         self.controller = controller
         self.tracks = tracks
 
-        self.controller.AddProjectChangeObserver(self)
-        self.controller.AddMergeObserver(self)
-
         # Set the main window's size
         self.resize(600, 480)
 
@@ -152,7 +149,7 @@ class TracksWindow(QWidget):
     def update_merge_layout(self):
         merge_label_text = ""
         self.merge_button.setEnabled(False)
-        if self.controller.CanMergeTracks():
+        if self.controller.handleCanMergeTracks():
             self.merge_button.setEnabled(True)
             merge_label_text = "Ready to merge"
             if self.controller.AreTracksMerged():
@@ -176,7 +173,7 @@ class TracksWindow(QWidget):
     def OnProjectChange(self):
 
         # TODO merge with tracks loaded from project. if a mismatch, notify and clear project tracks
-        self.tracks = self.controller.GetTracks()
+        self.tracks = self.controller.handleGetTracks()
         self.merge_button.setEnabled(True)
         self.populateList()
         self.update_merge_layout()

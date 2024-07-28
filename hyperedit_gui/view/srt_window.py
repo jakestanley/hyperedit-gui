@@ -68,7 +68,6 @@ class SrtWindow(QWidget):
         super().__init__(parent)
 
         self.controller = controller
-        self.controller.AddSrtChangeObserver(self)
 
         self.layout = QVBoxLayout(self)
 
@@ -131,7 +130,7 @@ class SrtWindow(QWidget):
         return stats_group_box
 
     def create_deaggress_groupbox(self):
-        
+        # TODO: show existing deaggress and edits
         deaggress_layout = QVBoxLayout()
         self.deaggress_button = QPushButton("Deaggress")
         self.deaggress_button.clicked.connect(self.controller.Deaggress)

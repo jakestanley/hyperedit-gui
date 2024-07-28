@@ -1,11 +1,14 @@
 import sys
 
+from typing import List
 from PySide6.QtWidgets import QApplication, QMainWindow, QStackedWidget
 
 from hyperedit_gui.view.project_window import ProjectWindow
 from hyperedit_gui.view.tracks_window import TracksWindow
 from hyperedit_gui.view.srt_window import SrtWindow
 from hyperedit_gui.controller import Controller
+
+from hyperedit_gui.service.services import InitialiseServices
 
 class MainWindow(QMainWindow):
     def __init__(self, controller: Controller):
@@ -18,7 +21,7 @@ class MainWindow(QMainWindow):
 
         self.stackedWidget = QStackedWidget()
         self.setCentralWidget(self.stackedWidget)
-
+        
         self.projectView = ProjectWindow(self.stackedWidget, controller)
         self.tracksView = TracksWindow(self.stackedWidget, [], controller)
         self.srtView = SrtWindow(self.stackedWidget, controller)
@@ -29,8 +32,16 @@ class MainWindow(QMainWindow):
 
 def start():
     app = QApplication(sys.argv)
+
     controller = Controller()
+    
+    # initialise services
+    InitialiseServices()
+
+    # create the main window
     mainWindow = MainWindow(controller)
+
+    # start the app, basically
     mainWindow.show()
     sys.exit(app.exec())
 

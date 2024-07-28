@@ -5,7 +5,6 @@ import vlc
 import time
 
 from hyperedit.extract_dialog import get_audio_tracks, extract_dialog
-from hyperedit.transcribe import transcribe
 from hyperedit.srt import PreviewSrt, GetPrimitiveSrtListHash
 from hyperedit.deaggress import deaggress
 from hyperedit.split_video import split, concat
@@ -14,83 +13,23 @@ from hyperedit_gui.model.srt import LoadSrts, GetSrts, SaveEdits
 from hyperedit_gui.model.projects import Project, CreateProject, GetCurrentProject, LoadProject, GlanceProject
 from hyperedit_gui.model.recent_projects import GetRecentProjects
 from hyperedit_gui.view.files import FindProjectFile, FindVideoFile
+from hyperedit_gui.service.project_service import GetProjectService, ProjectService
+from hyperedit_gui.service.merge_service import GetMergeService, MergeService
+from hyperedit_gui.service.transcribe_service import GetTranscribeService, TranscribeService
 from pathlib import Path
 
 class Controller:
-    def __init__(self):
+    def __init__(self):        
         self._deaggress_seconds = 0
         self._selected_rows = []
-        self._current_project_observers = []
-        self._transcribe_observers = []
-        self._srt_observers = []
-        self._merge_observers = []
         self._play_after_render = False # TODO: store in config?
         self._render_preview = True # TODO: store in project
 
-    def AddProjectChangeObserver(self, observer):
-        self._current_project_observers.append(observer)
-
-    def AddMergeObserver(self, observer):
-        self._merge_observers.append(observer)
-
-    def AddSrtChangeObserver(self, observer):
-        self._srt_observers.append(observer)
-
-    def AddTranscribeObserver(self, observer):
-        self._transcribe_observers.append(observer)
-
-    def NotifyProjectChangeObservers(self):
-        for observer in self._current_project_observers:
-            observer.OnProjectChange()
-
-    def NotifyMergeObservers(self):
-        for observer in self._merge_observers:
-            observer.OnMerge()
-
-    def NotifyTranscribeObservers(self):
-        for observer in self._transcribe_observers:
-            observer.OnTranscribe()
-
-    def NotifySrtChangeObservers(self):
-        for observer in self._srt_observers:
-            observer.OnSrtChange()
-
-    def create_project(self, video_file_path):
-        
-        if video_file_path == '':
-            return
-
-        try:
-            CreateProject(video_file_path)
-            GetRecentProjects().AddRecentProject(GetCurrentProject().project_path)
-            GetConfig().Save()
-            self.NotifyProjectChangeObservers()
-        except Exception as e:
-            print(f"Failed to create project: {e}")
-            return
+    def CreateProject(self, video_file_path):
+        GetProjectService().CreateProject(video_file_path=video_file_path)
     
-    def load_project(self, project_path):
-        if project_path == '':
-            return
-
-        LoadProject(project_path)
-        GetRecentProjects().AddRecentProject(GetCurrentProject().project_path)
-        LoadSrts(self.GetSrtFilePath())
-        self.NotifyProjectChangeObservers()
-    
-    def remove_project(self, project_path):
-        GetRecentProjects().RemoveRecentProject(project_path)
-        GetConfig().Save()
-
-    def locate_files(self, project: Project):
-        old_project_path = project.project_path
-        if not project.IsProjectPathValid():
-            project.project_path = FindProjectFile(project.name)
-            project = GlanceProject(project.project_path)
-        if not project.IsVideoPathValid():
-            project.video_path = FindVideoFile(project.video_path)
-        project.Save()
-        GetRecentProjects().ReplaceRecentProject(old_project_path, project.project_path)
+    def LoadProject(self, project_path):
+        GetProjectService().LoadProject(project_path=project_path)
     
     def GetTracksBitmap(self):
         bitmap = 0
@@ -131,21 +70,10 @@ class Controller:
         return os.path.exists(srt_file)
     
     def MergeTracks(self): # TODO: fix bug where transcribe button is not automatically enabled when merge complete
-        project_directory = os.path.dirname(GetCurrentProject().project_path)
-        wav_directory = os.path.join(project_directory, "WAV")
-        merge_file = os.path.join(wav_directory, f"{self.GetTracksBitmap()}.wav")     
-        tracks = [index for index, value in enumerate(self.GetTracks()) if value]   
-        extract_dialog(GetCurrentProject().video_path, tracks, merge_file)
+        GetMergeService().MergeTracks()
 
-    def TranscribeTracks(self): # TODO: fix bug where SRTs are not automatically selected when transcribe complete (similar to above)
-                                #   workaround is to reload the project
-        project_directory = os.path.dirname(GetCurrentProject().project_path)
-        srt_file = self.GetSrtFilePath()
-        wav_directory = os.path.join(project_directory, "WAV")
-        audio_file_path = os.path.join(wav_directory, f"{self.GetTracksBitmap()}.wav")     
-        transcribe(audio_file_path, srt_file)
-        self.NotifyTranscribeObservers()
-        self.NotifySrtChangeObservers()
+    def TranscribeTracks(self):
+        GetTranscribeService().TranscribeTracks()
 
     def GetSrtFilePath(self, deaggress_seconds=0):
         """
@@ -225,11 +153,14 @@ class Controller:
 
     def SetDeaggressSeconds(self, value):
         self._deaggress_seconds = value
+        GetCurrentProject().SetDeaggressSeconds(value)
+        GetCurrentProject().Save()
+
 
     def DeaggressZero(self):
         if self._deaggress_seconds == 0:
             return
-        self._deaggress_seconds = 0
+        self.SetDeaggressSeconds(0)
         LoadSrts(self.GetSrtFilePath())
         self.NotifySrtChangeObservers()
 
@@ -309,10 +240,10 @@ class Controller:
         os.startfile(render_directory)
 
     def RenderAll(self):
-        self._Render([srt.to_primitive() for srt in GetSrts()])
+        GetRenderService().Render([srt.to_primitive() for srt in GetSrts()])
 
     def RenderEnabled(self): # TODO do not re-concatenate if file with hash exists, i.e replaying a render
-        self._Render([srt.to_primitive() for srt in GetSrts() if srt.enabled])
+        GetRenderService().Render([srt.to_primitive() for srt in GetSrts() if srt.enabled])
 
     def RenderEnabledSelection(self):
         srts = []
@@ -321,7 +252,7 @@ class Controller:
             if srt.enabled:
                 srts.append(srt.to_primitive())
 
-        self._Render(srts)
+        GetRenderService().Render(srts)
 
     def Deaggress(self):
         input_path = self.GetSrtFilePath()
