@@ -57,6 +57,9 @@ class Controller:
 
     def create_project(self, video_file_path):
         
+        if video_file_path == '':
+            return
+
         try:
             CreateProject(video_file_path)
             GetRecentProjects().AddRecentProject(GetCurrentProject().project_path)
@@ -67,6 +70,9 @@ class Controller:
             return
     
     def load_project(self, project_path):
+        if project_path == '':
+            return
+
         LoadProject(project_path)
         GetRecentProjects().AddRecentProject(GetCurrentProject().project_path)
         LoadSrts(self.GetSrtFilePath())
