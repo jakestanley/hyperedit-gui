@@ -1,7 +1,7 @@
 import sys
 
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QPushButton, QWidget, QTableView, QHBoxLayout, QLabel, QCheckBox, QLineEdit, QGroupBox, QHeaderView
-from PySide6.QtGui import QStandardItemModel, QStandardItem, QDoubleValidator, QValidator
+from PySide6.QtGui import QStandardItemModel, QStandardItem, QDoubleValidator, QValidator, QColorConstants
 from PySide6.QtCore import Qt
 
 from hyperedit_gui.controller import Controller
@@ -293,11 +293,24 @@ class SrtWindow(QWidget):
             idItem = QStandardItem(entry.id)
             idItem.setFlags(~Qt.ItemIsEditable)
             enabledItem = QStandardItem() # Empty, will hold the checkbox
-            # TODO use edit start/end times if available 
-            startItem = QStandardItem(str(entry.original_start_time))
+
+            if entry.edited_start_time:
+                startItem = QStandardItem(str(entry.edited_start_time))
+                startItem.setBackground(QColorConstants.DarkYellow)
+                # startItem.setForeground(QColorConstants.Black)
+            else:
+                startItem = QStandardItem(str(entry.original_start_time))
             startItem.setFlags(Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable)
-            endItem = QStandardItem(str(entry.original_end_time))
+
+            # TODO reset button in action panel
+            if entry.edited_end_time:
+                endItem = QStandardItem(str(entry.edited_end_time))
+                endItem.setBackground(QColorConstants.DarkYellow)
+                # endItem.setForeground(QColorConstants.Black)
+            else:
+                endItem = QStandardItem(str(entry.original_end_time))
             endItem.setFlags(Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+
             actionItem = QStandardItem()  # Empty, will hold the button
             actionItem.setFlags(~Qt.ItemIsSelectable)
             self.model.appendRow([idItem, enabledItem, startItem, endItem, actionItem])
