@@ -38,6 +38,12 @@ this project aims to provide a way to interact with hyperedit that is less cumbe
 }
 ```
 
+## Using the EDL export
+
+- Right click media pool in Resolve
+- Select `Timelines -> Import -> "AAF / EDL..." -> the exported EDL file
+- Boom
+
 ## roadmap (prioritised)
 - renders need to be higher quality!!!
 - handle render subprocesses as threads, allow aborting (must cleanup)
