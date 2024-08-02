@@ -61,7 +61,7 @@ class Controller:
     def TranscribeTracks(self): # TODO: fix bug where SRTs are not automatically selected when transcribe complete (similar to above)
                                 #   workaround is to reload the project
         project_directory = os.path.dirname(GetCurrentProject().project_path)
-        srt_file = self.GetSrtFilePath()
+        srt_file = GetSrtService().GetSrtFilePath()
         wav_directory = os.path.join(project_directory, "WAV")
         audio_file_path = os.path.join(wav_directory, f"{GetTracksService().GetTracksBitmap()}.wav")     
         transcribe(audio_file_path, srt_file)

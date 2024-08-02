@@ -47,6 +47,7 @@ class TracksWindow(QWidget):
 
         GetProjectService().AddObserver(self)
         GetTracksService().AddObserver(self)
+        self.controller.AddTranscribeObserver(self)
 
         # Set the main window's size
         self.resize(600, 480)
@@ -171,6 +172,9 @@ class TracksWindow(QWidget):
 
     def OnMerge(self):
         self.update_merge_layout()
+        self.update_transcribe_hlayout()
+
+    def OnTranscribe(self):
         self.update_transcribe_hlayout()
 
     # TODO: this could take a project as arguments
