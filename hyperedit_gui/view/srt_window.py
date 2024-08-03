@@ -6,6 +6,7 @@ from PySide6.QtCore import Qt
 
 from hyperedit_gui.controller import Controller
 from hyperedit_gui.model.srt import GetSrts
+from hyperedit_gui.model.srt import Srt
 
 from hyperedit_gui.controllers.edit_controller import EditController, GetEditController
 from hyperedit_gui.service.srt_service import GetSrtService
@@ -36,8 +37,12 @@ class EnabledCell(QWidget):
     def Toggle(self, state):
         GetEditController().SetSrtRowEnabled(self.id, state == Qt.Checked.value)
 
+    def OnChange(self, srt: Srt):
+        if srt.id == self.id:
+            self.checkbox.setChecked(srt.enabled)
+
 class ActionPanel(QWidget):
-    def __init__(self, parent=None, id=None, enabled=True, controller=None):
+    def __init__(self, parent=None, id=None, controller=None):
         super().__init__(parent)
 
         self.id = id
@@ -290,38 +295,7 @@ class SrtWindow(QWidget):
 
     def populateTable(self): # TODO: Srts should be accessed through the controller
         for entry in GetSrts():
-            idItem = QStandardItem(entry.id)
-            idItem.setFlags(~Qt.ItemIsEditable)
-            enabledItem = QStandardItem() # Empty, will hold the checkbox
-
-            if entry.edited_start_time:
-                startItem = QStandardItem(str(entry.edited_start_time))
-                startItem.setBackground(QColorConstants.DarkYellow)
-                # startItem.setForeground(QColorConstants.Black)
-            else:
-                startItem = QStandardItem(str(entry.original_start_time))
-            startItem.setFlags(Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable)
-
-            # TODO reset button in action panel
-            if entry.edited_end_time:
-                endItem = QStandardItem(str(entry.edited_end_time))
-                endItem.setBackground(QColorConstants.DarkYellow)
-                # endItem.setForeground(QColorConstants.Black)
-            else:
-                endItem = QStandardItem(str(entry.original_end_time))
-            endItem.setFlags(Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable)
-
-            actionItem = QStandardItem()  # Empty, will hold the button
-            actionItem.setFlags(~Qt.ItemIsSelectable)
-            self.model.appendRow([idItem, enabledItem, startItem, endItem, actionItem])
-            self.model.itemChanged.connect(self.onItemChanged)
-
-            enabledCell = EnabledCell(id=entry.id, enabled=entry.enabled, controller=self.controller)
-            actionPanel = ActionPanel(id=entry.id, enabled=True, controller=self.controller)
-            current_row = self.model.rowCount() - 1
-            self.tableView.setIndexWidget(self.model.index(current_row, _COL_INDEX_CHECKED), enabledCell)
-            self.tableView.setIndexWidget(self.model.index(current_row, _COL_INDEX_ACTION), actionPanel)
-            
+            self.populateEntry(entry)
             
         # selects: Set selection behavior and mode
         self.tableView.setSelectionBehavior(QTableView.SelectRows)
@@ -331,6 +305,40 @@ class SrtWindow(QWidget):
         # self.tableView.resizeColumnsToContents()
         header = self.tableView.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.Stretch)
+
+    def populateEntry(self, entry: Srt):
+        idItem = QStandardItem(entry.id)
+        idItem.setFlags(~Qt.ItemIsEditable)
+        enabledItem = QStandardItem() # Empty, will hold the checkbox
+
+        if entry.edited_start_time:
+            startItem = QStandardItem(str(entry.edited_start_time))
+            startItem.setBackground(QColorConstants.DarkYellow)
+                # startItem.setForeground(QColorConstants.Black)
+        else:
+            startItem = QStandardItem(str(entry.original_start_time))
+        startItem.setFlags(Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+
+            # TODO reset button in action panel
+        if entry.edited_end_time:
+            endItem = QStandardItem(str(entry.edited_end_time))
+            endItem.setBackground(QColorConstants.DarkYellow)
+                # endItem.setForeground(QColorConstants.Black)
+        else:
+            endItem = QStandardItem(str(entry.original_end_time))
+        endItem.setFlags(Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+
+        actionItem = QStandardItem()  # Empty, will hold the button
+        actionItem.setFlags(~Qt.ItemIsSelectable)
+        self.model.appendRow([idItem, enabledItem, startItem, endItem, actionItem])
+        self.model.itemChanged.connect(self.onItemChanged)
+
+        enabledCell = EnabledCell(id=entry.id, enabled=entry.enabled, controller=self.controller)
+        entry.AddObserver(enabledCell)
+        actionPanel = ActionPanel(id=entry.id, controller=self.controller)
+        current_row = self.model.rowCount() - 1
+        self.tableView.setIndexWidget(self.model.index(current_row, _COL_INDEX_CHECKED), enabledCell)
+        self.tableView.setIndexWidget(self.model.index(current_row, _COL_INDEX_ACTION), actionPanel)
 
     def onItemChanged(self, item):
         if item.column() == _COL_INDEX_START:

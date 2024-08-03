@@ -28,12 +28,12 @@ class SrtService(Observable):
     def SetDeaggressSeconds(self, value):
         self._deaggress_seconds = value
 
-    def SetEnabled(self, enabled, indices = []):
+    def SetEnabled(self, enabled, indices = [], notify=False):
         for index in indices:
             GetSrts()[index].enabled = enabled
+            GetSrts()[index].NotifyObservers()
 
         SaveEdits(self.GetDeaggressedSrtFilePath()) # TODO: inefficient, need a callback
-        self.NotifyObservers() # TODO: special row observer?
 
     def GetSrtFilePath(self):
 

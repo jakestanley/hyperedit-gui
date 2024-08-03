@@ -1,6 +1,7 @@
 import json
 from typing import List
 from hyperedit.srt import parse_srt
+from hyperedit_gui.observable import Observable
 
 _SRTS_SINGLETON = None
 
@@ -8,8 +9,9 @@ _KEY_EDITED_START_TIME = "edited_start_time"
 _KEY_EDITED_END_TIME = "edited_end_time"
 _KEY_ENABLED = "enabled"
 
-class Srt:
+class Srt(Observable):
     def __init__(self, entry) -> None:
+        super().__init__()
         self.id = entry[0]
         self.original_start_time = entry[1]
         self.original_end_time = entry[2]
@@ -38,6 +40,9 @@ class Srt:
         json[_KEY_EDITED_END_TIME] = self.edited_end_time
         json[_KEY_ENABLED] = self.enabled
         return json
+    
+    def NotifyObserver(self, observer):
+        return observer.OnChange(self)
 
 def _LoadSrtEdits(srt_file_path) -> dict:
     srt_edit_path = srt_file_path + ".json"
