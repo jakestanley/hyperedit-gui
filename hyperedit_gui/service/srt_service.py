@@ -35,6 +35,14 @@ class SrtService(Observable):
 
         SaveEdits(self.GetDeaggressedSrtFilePath()) # TODO: inefficient, need a callback
 
+    def SetEditedStart(self, value, index):
+        GetSrts()[index].edited_start_time = value
+        SaveEdits(self.GetDeaggressedSrtFilePath())
+
+    def SetEditedEnd(self, value, index):
+        GetSrts()[index].edited_end_time = value
+        SaveEdits(self.GetDeaggressedSrtFilePath())
+
     def GetSrtFilePath(self):
 
         project_directory = os.path.dirname(GetCurrentProject().project_path)

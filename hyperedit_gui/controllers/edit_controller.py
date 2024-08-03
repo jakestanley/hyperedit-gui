@@ -29,6 +29,12 @@ class EditController:
             texts.append((index, GetSrts()[int(row)].text))
         return 
 
+    def SetSrtEditedStart(self, row, value: float):
+        GetSrtService().SetEditedStart(value, int(row))
+
+    def SetSrtEditedEnd(self, row, value: float):
+        GetSrtService().SetEditedStart(value, int(row))
+
     def SetDeaggressSeconds(self, value):
         GetSrtService().SetDeaggressSeconds(value)
 

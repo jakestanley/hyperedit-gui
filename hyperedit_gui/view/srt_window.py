@@ -342,9 +342,10 @@ class SrtWindow(QWidget):
 
     def onItemChanged(self, item):
         if item.column() == _COL_INDEX_START:
-            GetSrts()[item.row()].edited_start_time = float(item.text())
+            GetEditController().SetSrtEditedStart(item.row(), float(item.text()))
         elif item.column() == _COL_INDEX_END:
-            GetSrts()[item.row()].edited_end_time = float(item.text())
+            GetEditController().SetSrtEditedEnd(item.row(), float(item.text()))
+        
 
     def OnSrtChange(self):
         self.resetModel()
